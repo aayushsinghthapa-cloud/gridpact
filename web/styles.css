@@ -232,7 +232,7 @@ svg.plot { width: 100%; height: 100%; display: block; stroke: none; fill: none; 
 .kind-dot { width: 9px; height: 9px; border-radius: 2px; background: var(--c); flex: none; }
 
 /* ---------------- inject ---------------- */
-.panel-agents { background: none; border: 0; padding: 4px 0 0; }
+.panel-agents { padding: 4px 0 0; min-width: 0; }
 .panel-agents .agent-table { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); }
 .panel-inject { flex: none; }
 .inject-list { display: flex; flex-direction: column; gap: 6px; }
