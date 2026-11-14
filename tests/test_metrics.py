@@ -55,3 +55,17 @@ class NarrationIsOptional(unittest.TestCase):
                 "assert 'anthropic' not in sys.modules, 'core imported the LLM SDK'")
         r = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True)
         self.assertEqual(r.returncode, 0, r.stderr)
+
+    def test_enabled_narration_degrades_instead_of_raising(self):
+        """GRIDPACT_LLM=1 with no SDK / no credentials must return a message, never raise."""
+        import os
+        from unittest import mock
+        from gridpact import narration
+        from gridpact.simulation import Simulation
+        sc = load_scenario("cyclone_landfall")
+        sim = Simulation(sc, 41)
+        rec = sim.step()
+        with mock.patch.dict(os.environ, {"GRIDPACT_LLM": "1"}):
+            out = narration.narrate(sc, rec)
+        self.assertIn("text", out)
+        self.assertFalse(out["enabled"])

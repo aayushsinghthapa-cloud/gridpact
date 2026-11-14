@@ -142,6 +142,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(500, {"error": str(e), "rolled_back": True})
         except (KeyError, ValueError, ConfigError) as e:
             return self._json(400, {"error": str(e)})
+        except Exception as e:  # noqa: BLE001 - never drop the connection mid-demo
+            return self._json(500, {"error": f"internal error: {type(e).__name__}: {e}"})
 
 
 def serve(host: str = "127.0.0.1", port: int = 8041) -> None:

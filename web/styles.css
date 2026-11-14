@@ -188,7 +188,7 @@ svg.plot { width: 100%; height: 100%; display: block; stroke: none; fill: none; 
 .agent-head { display: flex; align-items: center; gap: 8px; }
 .agent-icon { width: 26px; height: 26px; border-radius: 6px; display: grid; place-items: center; background: color-mix(in srgb, var(--c) 18%, transparent); color: var(--c); }
 .agent-icon svg { width: 17px; height: 17px; }
-.agent-name { font-weight: 600; font-size: 15px; line-height: 1.25; flex: 1; min-width: 0; }
+.agent-name { font-weight: 600; font-size: 15px; line-height: 1.25; flex: 1; min-width: 0; min-height: 2.5em; display: flex; align-items: center; }
 .agent-head { align-items: center; flex-wrap: wrap; row-gap: 6px; min-height: 0; }
 .agent-head::after { content: ""; flex-basis: 100%; order: 2; }
 .agent-head .status { order: 3; }
@@ -233,7 +233,17 @@ svg.plot { width: 100%; height: 100%; display: block; stroke: none; fill: none; 
 
 /* ---------------- inject ---------------- */
 .panel-agents { padding: 4px 0 0; min-width: 0; }
-.panel-agents .agent-table { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); }
+.agent-table-wrap, .cmp-wrap {
+  overflow-x: auto;
+  background:
+    linear-gradient(to right, var(--panel) 30%, rgba(17,24,34,0)) left / 28px 100% no-repeat local,
+    linear-gradient(to left, var(--panel) 30%, rgba(17,24,34,0)) right / 28px 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, rgba(0,0,0,.55), transparent) left / 12px 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, rgba(0,0,0,.55), transparent) right / 12px 100% no-repeat scroll,
+    var(--panel);
+}
+.panel-agents .agent-table-wrap { border: 1px solid var(--line); border-radius: var(--r); padding: 10px 8px 4px; }
+.agent-table td, .agent-table th { white-space: nowrap; }
 .panel-inject { flex: none; }
 .inject-list { display: flex; flex-direction: column; gap: 6px; }
 .inject-btn {
@@ -260,7 +270,7 @@ svg.plot { width: 100%; height: 100%; display: block; stroke: none; fill: none; 
 .log-tag { font-size: 12px; color: var(--text-3); }
 .log-tag.is-contested { color: var(--text-2); }
 .log-tag.is-fallback { color: var(--fail); }
-.log-outcome { font-size: 13px; color: var(--text); margin: 0 0 4px; }
+.log-outcome { font-size: 13px; color: var(--text); margin: 0 0 4px; text-wrap: pretty; }
 .log-outcome.is-fallback { color: var(--fail); }
 .log-response { font-size: 13.5px; color: var(--text); margin: 4px 0 10px; line-height: 1.45; text-wrap: pretty; }
 .log-response b { color: var(--stress); font-weight: 600; }
@@ -357,13 +367,11 @@ svg.plot { width: 100%; height: 100%; display: block; stroke: none; fill: none; 
   .chart-readout { justify-content: flex-start; gap: 4px 14px; }
   .chart { height: 240px; }
   .agents { grid-template-columns: minmax(0, 1fr); }
-  .agent-table-wrap { overflow-x: auto; }
   .col-side { top: 0; }
   .transport { padding-left: 0; border-left: 0; }
   #scenario { min-width: 0; width: 100%; }
   .run-setup { flex-wrap: wrap; }
   .headline { font-size: 21px; }
-  .cmp-wrap { overflow-x: auto; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }

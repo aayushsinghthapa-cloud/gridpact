@@ -1,6 +1,7 @@
 # One-minute demo script
 
-**Before judges arrive:** `python3 gridpact.py` (works offline). Leave Scenario = *Cyclone
+**Before judges arrive:** run `python3 gridpact.py check` on the demo laptop (it should end with
+`RESULT: READY`), then `python3 gridpact.py` (works offline). Leave Scenario = *Cyclone
 landfall*, Seed = *41*, Speed = *10×*. Have the browser full-screen on the laptop.
 
 Rehearsed numbers below come from a real run with Substation 2 injected at 06:30. If you click
@@ -21,7 +22,7 @@ policy with *your* exact clicks, so whatever it shows is real.
 
 - **"Show me the math"** → [ALGORITHM.md](ALGORITHM.md): the worked example of a real contested step, round by round.
 - **"Does it scale?"** → switch Scenario to *Metro stress test (24 utilities)*, press Play.
-- **"Can it break?"** → open a terminal and run `python3 gridpact.py test` (51 tests, ~3 s).
+- **"Can it break?"** → open a terminal and run `python3 gridpact.py test` (52 tests, ~3 s).
 - **"What if an agent lies?"** → [RESULTS.md](RESULTS.md) "What if an agent lies?". Lying helps the liar, which we admit. It can never break capacity.
 - Hard questions → [JUDGE_QA.md](JUDGE_QA.md).
 

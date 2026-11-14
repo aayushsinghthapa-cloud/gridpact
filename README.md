@@ -39,7 +39,8 @@ python3 gridpact.py            # opens the dashboard at http://127.0.0.1:8041
 Other commands:
 
 ```bash
-python3 gridpact.py test                                # all 51 tests (the hard guarantees)
+python3 gridpact.py check                               # pre-flight on the demo laptop: tests, scenarios, port, narration
+python3 gridpact.py test                                # all 52 tests (the hard guarantees)
 python3 gridpact.py run cyclone_landfall --seed 41      # headless: every policy, every metric
 python3 gridpact.py results                             # regenerate RESULTS.md (~7 s)
 python3 scripts/worked_example.py                       # regenerate the worked example in ALGORITHM.md
@@ -76,7 +77,9 @@ pip install anthropic && export ANTHROPIC_API_KEY=...
 GRIDPACT_LLM=1 python3 gridpact.py
 ```
 
-A "Narrate step" button appears and asks the LLM to explain the step's log in plain English. The
+Check it with `GRIDPACT_LLM=1 python3 gridpact.py check` (it makes one real call). A "Narrate
+step" button then appears in the Negotiation panel and asks the LLM to explain the step's log in
+plain English. The
 simulator never depends on it: the SDK is imported only when enabled, failures show a message,
 and the narration never influences allocation.
 
@@ -117,7 +120,7 @@ gridpact/                engine (standard library only)
 web/                     dashboard (vanilla JS, SVG charts, bundled fonts)
 data/                    agents and scenarios (JSON)
 scripts/                 results generator, worked example, stress-agent generator
-tests/                   51 unittest tests
+tests/                   52 unittest tests
 ```
 
 Design context for the UI lives in [PRODUCT.md](PRODUCT.md) (Impeccable design skill).

@@ -38,7 +38,7 @@ Format for each: **Chose**, **Alternatives**, **Why**. Numbers quoted here come 
   values line up and don't jitter while the simulation runs.
 
 ### T-5. Tests: `unittest` (standard library)
-- **Chose:** 51 tests with `unittest`, run with `python3 gridpact.py test`.
+- **Chose:** 52 tests with `unittest`, run with `python3 gridpact.py test`.
 - **Alternatives:** pytest; Hypothesis for property-based testing.
 - **Why:** Same reason as T-1: nothing to install. We hand-wrote the property-style tests we
   needed, for example 3,000 random cases fuzzing the fallback, and every scenario × policy × seed
@@ -74,7 +74,9 @@ Format for each: **Chose**, **Alternatives**, **Why**. Numbers quoted here come 
 - **Alternatives:** No narration; making it a core feature; raw HTTP calls.
 - **Why:** The brief says the core must never depend on it. The SDK import happens inside the
   function, so the simulator runs without the package. Any failure (no package, no key, no
-  network) returns a message instead of raising. A test checks that a normal run never imports
+  network) returns a message instead of raising. We verified this against the real SDK (2.8.0):
+  with no credentials the SDK raises a `TypeError` before any request, which our first version
+  didn't catch. Narration now catches every exception, and a test covers it. A test checks that a normal run never imports
   the SDK. The narrator only paraphrases the finished, deterministic log; its text never feeds
   back into allocation.
 

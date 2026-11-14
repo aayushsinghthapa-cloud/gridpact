@@ -86,7 +86,7 @@ sequenceDiagram
 
 | File | What it does, in plain words |
 |---|---|
-| [gridpact.py](gridpact.py) | The one command. `python3 gridpact.py` opens the dashboard; `test`, `run`, `results` are sub-commands. |
+| [gridpact.py](gridpact.py) | The one command. `python3 gridpact.py` opens the dashboard; `test`, `run`, `results` and `check` (a pre-flight report for the demo laptop) are sub-commands. |
 | [gridpact/models.py](gridpact/models.py) | Plain frozen records: `AgentConfig`, `AgentState`, `Request`, `Proposal`, `SimState`. Frozen means they can't be changed after creation. That is the basis of the atomic commit. Power on the wire is integer watts. |
 | [gridpact/config.py](gridpact/config.py) | Reads `data/scenarios/*.json` and the agents file each scenario names. Rejects bad input loudly (min > desired, unknown agent in an event, dependency cycles onto itself, and so on). |
 | [gridpact/agent.py](gridpact/agent.py) | `UtilityAgent`: one per utility. Builds its request, computes its urgency bid, chooses its floor (hold firm or dig into reserves), and decides how much to concede each round. Every method receives only the agent's **own** state plus a `PublicRound`. |
@@ -106,7 +106,7 @@ sequenceDiagram
 | [data/scenarios/](data/scenarios/) | Cyclone landfall, cascading substation failures, long heatwave brownout, metro stress test. |
 | [scripts/generate_results.py](scripts/generate_results.py) | Writes RESULTS.md from real runs (10 seeds, honesty experiment, scaling). |
 | [scripts/worked_example.py](scripts/worked_example.py) | Writes the round-by-round worked example into ALGORITHM.md from a real step. |
-| [tests/](tests/) | 51 `unittest` tests. The three hard guarantees live in `test_invariants.py`, `test_atomicity.py` and `test_determinism.py`. |
+| [tests/](tests/) | 52 `unittest` tests. The three hard guarantees live in `test_invariants.py`, `test_atomicity.py` and `test_determinism.py`. |
 
 ## HTTP API
 

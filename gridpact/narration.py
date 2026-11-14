@@ -74,6 +74,10 @@ def narrate(scenario, record: dict) -> dict:
         return {"enabled": False, "text": "Narration unavailable: no network (the simulator is unaffected)."}
     except anthropic.APIStatusError as e:
         return {"enabled": False, "text": f"Narration unavailable: API error {e.status_code}."}
+    except Exception as e:  # noqa: BLE001 - narration must NEVER break the demo
+        # e.g. no credentials configured at all: the SDK raises TypeError before any request.
+        return {"enabled": False, "text": f"Narration unavailable ({type(e).__name__}). "
+                                          "Set ANTHROPIC_API_KEY, or run without GRIDPACT_LLM."}
 
     if response.stop_reason == "refusal":
         return {"enabled": True, "text": "The narrator declined this step; the log above is authoritative."}
