@@ -32,7 +32,7 @@ Damage change is the mean over seeds of (GridPact − baseline) / baseline. Nega
 | Rounds per contested step (mean) | 3.94 ± 0.04 | n/a | n/a | n/a |
 | Rounds per contested step (max) | 8 ± 0 | n/a | n/a | n/a |
 | Fallback steps | 0.0 | 0.0 | 0.0 | 0.0 |
-| Compute time per step (ms, mean) | 0.137 | 0.070 | 0.067 | 0.069 |
+| Compute time per step (ms, mean) | 0.130 | 0.068 | 0.067 | 0.069 |
 
 ### Seed 41 (what the dashboard shows)
 
@@ -47,7 +47,7 @@ Damage change is the mean over seeds of (GridPact − baseline) / baseline. Nega
 | Rounds per contested step (mean) | 3.95 | n/a | n/a | n/a |
 | Rounds per contested step (max) | 8 | n/a | n/a | n/a |
 | Fallback steps | 0.0 | 0.0 | 0.0 | 0.0 |
-| Compute time per step (ms, mean) | 0.133 | 0.068 | 0.073 | 0.067 |
+| Compute time per step (ms, mean) | 0.136 | 0.077 | 0.067 | 0.071 |
 
 Longest outage per utility, hours (failure events):
 
@@ -75,7 +75,7 @@ Longest outage per utility, hours (failure events):
 | Rounds per contested step (mean) | 3.24 ± 0.02 | n/a | n/a | n/a |
 | Rounds per contested step (max) | 7 ± 0 | n/a | n/a | n/a |
 | Fallback steps | 0.0 | 0.0 | 0.0 | 0.0 |
-| Compute time per step (ms, mean) | 0.140 | 0.074 | 0.070 | 0.074 |
+| Compute time per step (ms, mean) | 0.130 | 0.067 | 0.065 | 0.067 |
 
 ### Seed 41 (what the dashboard shows)
 
@@ -90,7 +90,7 @@ Longest outage per utility, hours (failure events):
 | Rounds per contested step (mean) | 3.23 | n/a | n/a | n/a |
 | Rounds per contested step (max) | 7 | n/a | n/a | n/a |
 | Fallback steps | 0.0 | 0.0 | 0.0 | 0.0 |
-| Compute time per step (ms, mean) | 0.151 | 0.068 | 0.067 | 0.071 |
+| Compute time per step (ms, mean) | 0.129 | 0.065 | 0.064 | 0.066 |
 
 Longest outage per utility, hours (failure events):
 
@@ -118,7 +118,7 @@ Longest outage per utility, hours (failure events):
 | Rounds per contested step (mean) | 4.39 ± 0.04 | n/a | n/a | n/a |
 | Rounds per contested step (max) | 7 | n/a | n/a | n/a |
 | Fallback steps | 0.0 | 0.0 | 0.0 | 0.0 |
-| Compute time per step (ms, mean) | 0.171 | 0.088 | 0.077 | 0.082 |
+| Compute time per step (ms, mean) | 0.151 | 0.085 | 0.077 | 0.088 |
 
 ### Seed 41 (what the dashboard shows)
 
@@ -133,7 +133,7 @@ Longest outage per utility, hours (failure events):
 | Rounds per contested step (mean) | 4.38 | n/a | n/a | n/a |
 | Rounds per contested step (max) | 7 | n/a | n/a | n/a |
 | Fallback steps | 0.0 | 0.0 | 0.0 | 0.0 |
-| Compute time per step (ms, mean) | 0.155 | 0.081 | 0.066 | 0.074 |
+| Compute time per step (ms, mean) | 0.145 | 0.074 | 0.068 | 0.070 |
 
 Longest outage per utility, hours (failure events):
 
@@ -161,7 +161,7 @@ Longest outage per utility, hours (failure events):
 | Rounds per contested step (mean) | 4.10 ± 0.06 | n/a | n/a | n/a |
 | Rounds per contested step (max) | 9 ± 0 | n/a | n/a | n/a |
 | Fallback steps | 0.0 | 0.0 | 0.0 | 0.0 |
-| Compute time per step (ms, mean) | 0.873 | 0.310 | 0.303 | 0.337 |
+| Compute time per step (ms, mean) | 0.860 | 0.324 | 0.374 | 0.344 |
 
 ### Seed 41 (what the dashboard shows)
 
@@ -176,7 +176,7 @@ Longest outage per utility, hours (failure events):
 | Rounds per contested step (mean) | 4.15 | n/a | n/a | n/a |
 | Rounds per contested step (max) | 9 | n/a | n/a | n/a |
 | Fallback steps | 0.0 | 0.0 | 0.0 | 0.0 |
-| Compute time per step (ms, mean) | 0.845 | 0.295 | 0.288 | 0.293 |
+| Compute time per step (ms, mean) | 0.896 | 0.299 | 0.287 | 0.301 |
 
 Longest outage per utility, hours (failure events):
 
@@ -209,11 +209,11 @@ The 24-utility metro replicated k times (supply scaled by k), seed 41, full 24 h
 
 | Agents | GridPact ms/step (mean) | ms/step (p95) | Rounds/contested step (mean / max) | Fallback steps | Capacity violations | Failure events |
 |---:|---:|---:|---:|---:|---:|---:|
-| 4 | 0.13 | 0.18 | 3.95 / 8 | 0 | 0 | 0 |
-| 24 | 0.79 | 1.06 | 4.08 / 8 | 0 | 0 | 0 |
-| 48 | 2.02 | 2.87 | 4.08 / 8 | 0 | 0 | 0 |
-| 96 | 5.96 | 8.23 | 4.08 / 8 | 0 | 0 | 0 |
-| 192 | 23.84 | 52.93 | 4.08 / 8 | 0 | 0 | 0 |
+| 4 | 0.14 | 0.18 | 3.95 / 8 | 0 | 0 | 0 |
+| 24 | 0.82 | 1.10 | 4.08 / 8 | 0 | 0 | 0 |
+| 48 | 2.23 | 3.26 | 4.08 / 8 | 0 | 0 | 0 |
+| 96 | 6.80 | 11.35 | 4.08 / 8 | 0 | 0 | 0 |
+| 192 | 20.39 | 30.05 | 4.08 / 8 | 0 | 0 | 0 |
 
 Each round costs O(n) per agent decision (every agent reads the public offer table), so a round is O(n²) in the worst case; the round count stays bounded by the per-phase increment rule and the cap of 16.
 
@@ -241,4 +241,4 @@ Each round costs O(n) per agent decision (every agent reads the public offer tab
 - **The LLM narrator is optional and unevaluated.** It only paraphrases the deterministic log
   and is off by default.
 
-_Generated in 6.9 s._
+_Generated in 6.6 s._
