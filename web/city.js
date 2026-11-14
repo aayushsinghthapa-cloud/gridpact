@@ -12,7 +12,7 @@
   const POLICY_ORDER = ["gridpact", "priority", "proportional", "equal"];
   const POLICY_NAME = { gridpact: "GridPact", priority: "Strict priority", proportional: "Proportional", equal: "Equal split" };
   const DASH = { gridpact: "", priority: "6 4", proportional: "2 3", equal: "10 3 2 3" };
-  const KIND_LABEL = { replay: "Replay of a recorded day", analog: "Recorded event on today's grid", forecast: "Forecast" };
+  const KIND_LABEL = { replay: "Recorded day", analog: "Recorded event, today's grid", forecast: "Forecast" };
   const SECTOR_COLOR = { hospital: "var(--s-hospital)", water: "var(--s-water)", emergency: "var(--s-emergency)",
                          telecom: "var(--s-telecom)", homes: "var(--s-homes)", plant: "var(--ivory)", weather: "var(--text-3)" };
   const S = { info: null, run: null, disaster: "grid_2020", intensity: 1, seed: 41, policy: "gridpact",
@@ -89,9 +89,9 @@
     const box = $("#disasters");
     box.innerHTML = S.info.disasters.map(d => `
       <button type="button" class="disaster" role="radio" data-id="${d.id}" aria-checked="${d.id === S.disaster}">
-        <span class="d-kind d-kind-${d.kind}">${esc(KIND_LABEL[d.kind])}</span>
         <span class="d-name">${esc(d.name)}</span>
         <span class="d-date">${esc(d.date)}</span>
+        <span class="kind-tag kind-${d.kind}">${esc(KIND_LABEL[d.kind])}</span>
       </button>`).join("");
     box.querySelectorAll(".disaster").forEach(b => b.addEventListener("click", () => {
       if (S.disaster === b.dataset.id) return;
@@ -140,7 +140,7 @@
   function renderRecord() {
     const d = disaster();
     $("#record-kind").textContent = KIND_LABEL[d.kind];
-    $("#record-kind").className = "kind-badge d-kind-" + d.kind;
+    $("#record-kind").className = "kind-tag kind-" + d.kind;
     $("#record-title").textContent = d.name;
     $("#record-date").textContent = d.date;
     $("#record-summary").textContent = d.summary;
@@ -426,7 +426,7 @@
     const sectors = S.info.sectors;
     const box = $("#services");
     box.innerHTML = sectors.map(s => `
-      <figure class="svc" style="--c:${SECTOR_COLOR[s.kind]}">
+      <figure class="svc${s.id === "homes" ? " svc-wide" : ""}" style="--c:${SECTOR_COLOR[s.kind]}">
         <figcaption><svg aria-hidden="true"><use href="#i-${s.kind}"/></svg><b>${esc(s.name)}</b><span>${fmtMW(s.desired_mw)} · ${fmtBig(s.units)} ${esc(s.unit)}</span></figcaption>
         <div class="svc-chart" data-id="${s.id}"></div>
         <div class="svc-low" data-id="${s.id}"></div>
@@ -529,7 +529,8 @@
       if (id !== S.reqId) return;                 // a newer request superseded this one
       S.run = data;
       const ms = performance.now() - started;
-      setStatus(`${disaster().name} · ran ${4 * (data.forecast_members + 1)} simulations in ${(ms / 1000).toFixed(1)} s`);
+      const took = ms < 1000 ? `${Math.round(ms)} ms` : `${(ms / 1000).toFixed(1)} s`;
+      setStatus(`${4 * (data.forecast_members + 1)} simulations · ${took}${ms < 150 ? " (already computed)" : ""}`);
       drawSupply(); drawServices(); renderOutcome(); updateTime();
     } catch (e) {
       if (id === S.reqId) setStatus("Run failed: " + e.message);

@@ -36,9 +36,10 @@
     <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-bolt"/></svg>
     <span class="brand-name">GridPact</span>
   </div>
-  <nav class="tabs" aria-label="Pages">
-    <a class="tab" href="index.html">Live demo</a>
-    <a class="tab" href="city.html" aria-current="page">Mumbai, real data</a>
+  <nav class="pages" aria-label="Pages">
+    <a href="index.html">Live run</a>
+    <a href="index.html?tab=results">Results</a>
+    <a href="city.html" aria-current="page">Mumbai</a>
   </nav>
   <div class="bar-status" id="run-status" aria-live="polite">Loading city data…</div>
 </header>
@@ -98,9 +99,8 @@
     <div class="main-col">
       <section class="panel panel-record" aria-labelledby="record-title">
         <div class="record-head">
-          <span class="kind-badge" id="record-kind"></span>
           <h2 id="record-title"></h2>
-          <p class="record-date" id="record-date"></p>
+          <p class="record-date"><span id="record-date"></span><span id="record-kind"></span></p>
         </div>
         <p class="record-summary" id="record-summary"></p>
         <div class="record-grid">

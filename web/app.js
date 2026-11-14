@@ -238,7 +238,7 @@
   function renderClock() {
     const n = S.records.length, N = S.info.steps;
     $("#clock").textContent = "T+" + Charts.fmtHour(n * S.info.step_minutes / 60);
-    $("#clock-sub").textContent = `step ${n} of ${N} · ${S.info.step_minutes} min each`;
+    $("#clock-sub").textContent = `step ${n} / ${N} · ${S.info.step_minutes} min`;
   }
 
   function renderChart() {

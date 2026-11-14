@@ -89,12 +89,12 @@ b { font-weight: 600; }
 select, input {
   font: 500 13.5px var(--font); color: var(--text);
   background: var(--panel-2); border: 1px solid var(--line-strong); border-radius: var(--r-sm);
-  height: 32px; padding: 0 10px;
+  height: 32px; padding: 0 10px; caret-color: var(--ivory);
 }
 select { padding-right: 28px; appearance: none; cursor: pointer;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23aab5c3' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='m7 10 5 5 5-5'/%3E%3C/svg%3E");
   background-repeat: no-repeat; background-position: right 7px center; background-size: 16px; }
-#scenario { min-width: 230px; }
+#scenario { min-width: 210px; }
 .field-seed input { width: 84px; }
 select:hover, input:hover { border-color: #46597a; }
 
@@ -118,13 +118,12 @@ select:hover, input:hover { border-color: #46597a; }
 .clock-time { font: 500 20px var(--mono); letter-spacing: -0.02em; }
 .clock-sub { font-size: 12px; color: var(--text-3); }
 
-.tabs { display: flex; gap: 2px; background: var(--bg); padding: 3px; border-radius: 7px; border: 1px solid var(--line); }
-.tab { font: 500 13.5px var(--font); color: var(--text-2); background: none; border: 0; padding: 6px 12px; border-radius: 5px; cursor: pointer; }
-.tab:hover { color: var(--text); }
-.tab[aria-selected="true"] { background: var(--panel-3); color: var(--text); }
-.nav-city { display: inline-flex; align-items: center; gap: 5px; font: 500 13.5px var(--font); color: var(--text-2); text-decoration: none; padding: 6px 4px; border-bottom: 1px solid var(--line-strong); }
-.nav-city:hover { color: var(--text); border-color: var(--ivory); }
-.nav-city svg { width: 14px; height: 14px; transform: rotate(-90deg); }
+/* page switcher: the same control on both pages, beside the brand */
+.pages { display: flex; align-items: center; gap: 2px; padding-left: 14px; margin-right: 6px; border-left: 1px solid var(--line); align-self: stretch; }
+.pages-tabs { display: contents; }
+.pages a, .pages button { font: 500 13.5px var(--font); color: var(--text-3); text-decoration: none; padding: 6px 10px; border-radius: 6px; background: none; border: 0; cursor: pointer; }
+.pages a:hover, .pages button:hover { color: var(--text); background: var(--panel-2); }
+.pages a[aria-current="page"], .pages button[aria-selected="true"] { color: var(--text); background: var(--panel-3); }
 
 /* ---------------- guarantees strip ---------------- */
 .guarantees {
@@ -400,8 +399,6 @@ svg.plot { width: 100%; height: 100%; display: block; stroke: none; fill: none; 
   .run-setup .field:first-child { flex: 1 1 100%; }
   .run-setup .field:first-child select { width: 100%; }
   .clock { margin-left: auto; }
-  .tabs { width: 100%; }
-  .tab { flex: 1; }
   .guarantees { gap: 6px 16px; }
   .panel-head { flex-wrap: wrap; }
   .chart-readout { justify-content: flex-start; gap: 4px 14px; }

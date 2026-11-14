@@ -41,6 +41,13 @@
     <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-bolt"/></svg>
     <span class="brand-name">GridPact</span>
   </div>
+  <nav class="pages" aria-label="Pages">
+    <div class="pages-tabs" role="tablist" aria-label="View">
+      <button role="tab" id="tab-live" aria-selected="true" aria-controls="view-live">Live run</button>
+      <button role="tab" id="tab-results" aria-selected="false" aria-controls="view-results">Results</button>
+    </div>
+    <a href="city.html">Mumbai</a>
+  </nav>
 
   <div class="run-setup" role="group" aria-label="Run setup">
     <label class="field">
@@ -79,11 +86,6 @@
     <span class="clock-sub" id="clock-sub">step 0 of 0</span>
   </div>
 
-  <nav class="tabs" role="tablist" aria-label="View">
-    <button role="tab" id="tab-live" class="tab" aria-selected="true" aria-controls="view-live">Live run</button>
-    <button role="tab" id="tab-results" class="tab" aria-selected="false" aria-controls="view-results">Results vs baselines</button>
-  </nav>
-  <a class="nav-city" href="city.html">Mumbai, real data<svg aria-hidden="true"><use href="#i-down"/></svg></a>
 </header>
 
 <div class="guarantees" aria-label="Hard guarantees, checked every step">
