@@ -35,13 +35,17 @@ request.min = max(0, M − X)                                 # rounded UP: the 
 ## 3. Urgency bid
 
 ```
-u = weight × (1 + e × min(k, cap)) × (1 + γ × (1 − R/capacity)) × (1 + β × F)
+u = weight × h × (1 + e × min(k, cap)) × (1 + γ × (1 − R/capacity)) × (1 + β × F)
 u = clamp(u, 0.01, 50)
 ```
+
+The bid is meant to read as "the harm each kW cut from me does right now". That is why the
+agent's own comfort-harm rate h (`damage_soft`, private config) is in it.
 
 | Symbol | Meaning | Value |
 |---|---|---|
 | weight | how critical the utility is (config) | Hospital 1.0, Emergency 0.9, Water 0.75, Telecom 0.6 |
+| h | the agent's own harm per kW of comfort shortfall (`damage_soft`) | 1.0 for every core utility (so it drops out); Mumbai sectors differ by ~30×, see [CITY.md](CITY.md) |
 | e | escalation per consecutive short step | 0.08 – 0.10 (config) |
 | γ | reserve-scarcity weight `GAMMA_RESERVE` | 2.0 (an empty reserve triples the bid) |
 | β | credit weight `BETA_CREDITS` | 0.10 per credit |
@@ -66,12 +70,17 @@ greedy agents: floor = request.max (never concede)
 offer is still above their floor. Every agent i in W *independently* computes:
 
 ```
-share_i    = (1/u_i) / Σ_{j∈W} (1/u_j)          # the least urgent gives the most
+slack_j    = offer_j − floor_j                  # public: offers and floors are announced
+share_i    = (slack_i/u_i) / Σ_{j∈W} (slack_j/u_j)   # less urgent → gives a bigger FRACTION of its slack
 target_i   = ceil(share_i × E)
 increment  = ceil(max(1 kW, 0.25 × phase_slack_i))   # phase_slack = offer at phase start − floor
 c_i        = min(target_i, increment, offer_i − floor_i)
 offer_i   ← offer_i − c_i
 ```
+
+Shares are weighted by slack so a concession is a *fraction of what you can give*, not an absolute
+amount: a 37 MW hospital is never asked to give as many watts as a 3,000 MW residential load just
+because their bids are similar (DECISIONS.md D-17).
 
 All agents decide from the same public snapshot, then all concessions apply at once. Since the
 shares add up to 1, the concessions never overshoot by more than 1 W per agent (from the `ceil`).
@@ -102,16 +111,19 @@ rise by 10% per credit. An agent that gave up less than average pays credits bac
 within a few hours of a crisis, so credits stopped meaning anything. See DECISIONS.md D-9.
 
 Starvation is prevented by two growing terms. A utility that keeps losing power gains urgency
-from (1 + e·k), and one that keeps giving way gains it from (1 + βF). Both reverse the
-1/u ordering over time.
+from (1 + e·k), and one that keeps giving way gains it from (1 + βF). Both shrink its share of
+future concessions over time.
 
 ## 7. Deterministic fallback (`safe_fallback`)
 
 Used when there is a deadlock, the round cap is hit, or the validator rejects a proposal:
 
 1. Order agents by announced bid, highest first. Ties go to the lower agent id.
-2. In that order, give each agent `min(request.min, remaining supply)`. This keeps the most urgent alive first.
-3. In the same order, top each agent up toward its last offer (or `request.max`) from what remains.
+2. In that order, give each agent its whole `request.min` **if it fits** in the remaining supply;
+   otherwise skip it. A partial floor keeps nobody alive, so it would only waste power (D-18).
+3. In the same order, top each agent up from what remains: toward its last offer after a round
+   cap (those offers were converging), or toward `request.max` after a deadlock (concessions made
+   for an agreement that cannot exist are void, D-18).
 
 Every grant is clipped to [0, request.max] and taken from `remaining`, which starts at S and
 never goes negative. So the fallback satisfies the validator by construction (fuzz-tested over
@@ -168,53 +180,51 @@ Active events: Storm casualties arrive: Hospital load +20%.
 
 | Agent | Demand factor | Desired | Critical min | Reserve | Discharge available | Recharge want | Request max | Request min (hard floor) |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| Hospital | ×1.20 | 540.0 kW | 360.0 kW | 439.6 kWh (36.6%) | 250.0 kW | 150.0 kW | 690.000 kW | 110.000 kW |
-| Emergency Services | ×1.00 | 200.0 kW | 120.0 kW | 62.9 kWh (26.2%) | 100.0 kW | 60.0 kW | 260.000 kW | 20.000 kW |
-| Water Pumping | ×1.00 | 360.0 kW | 200.0 kW | 270.7 kWh (33.8%) | 160.0 kW | 120.0 kW | 480.000 kW | 40.000 kW |
-| Telecom | ×1.00 | 150.0 kW | 80.0 kW | 91.5 kWh (28.6%) | 80.0 kW | 60.0 kW | 210.000 kW | 0.000 kW |
+| Hospital | ×1.20 | 540.0 kW | 360.0 kW | 408.6 kWh (34.1%) | 250.0 kW | 150.0 kW | 690.000 kW | 110.000 kW |
+| Emergency Services | ×1.00 | 200.0 kW | 120.0 kW | 68.0 kWh (28.3%) | 100.0 kW | 60.0 kW | 260.000 kW | 20.000 kW |
+| Water Pumping | ×1.00 | 360.0 kW | 200.0 kW | 277.9 kWh (34.7%) | 160.0 kW | 120.0 kW | 480.000 kW | 40.000 kW |
+| Telecom | ×1.00 | 150.0 kW | 80.0 kW | 96.9 kWh (30.3%) | 80.0 kW | 60.0 kW | 210.000 kW | 0.000 kW |
 
 Request max = desired + recharge want. Request min = max(0, critical min − discharge available), rounded **up** to whole watts.
 
-Urgency bid u = weight × (1 + e × streak) × (1 + γ × (1 − reserve fraction)) × (1 + β × credits), with γ = 2.0, β = 0.1:
+Urgency bid u = weight × harm rate (1.0 for every core utility) × (1 + e × streak) × (1 + γ × (1 − reserve fraction)) × (1 + β × credits), with γ = 2.0, β = 0.1:
 
 | Agent | weight | streak (e) | escalation | reserve fraction | scarcity | credits | credit factor | **bid u** |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| Hospital | 1.0 | 10 (0.1) | 2.00 | 0.3663 | 2.2673 | 3.259 | 1.3259 | **6.0125** |
-| Emergency Services | 0.9 | 14 (0.1) | 2.40 | 0.2621 | 2.4758 | 0.000 | 1.0000 | **5.3476** |
-| Water Pumping | 0.75 | 14 (0.08) | 2.12 | 0.3384 | 2.3233 | 4.588 | 1.4588 | **5.3888** |
-| Telecom | 0.6 | 14 (0.08) | 2.12 | 0.2860 | 2.4279 | 19.212 | 2.9212 | **9.0215** |
+| Hospital | 1.0 | 10 (0.1) | 2.00 | 0.3405 | 2.3189 | 6.607 | 1.6607 | **7.7021** |
+| Emergency Services | 0.9 | 11 (0.1) | 2.10 | 0.2833 | 2.4333 | 0.000 | 1.0000 | **4.5990** |
+| Water Pumping | 0.75 | 14 (0.08) | 2.12 | 0.3474 | 2.3052 | 4.103 | 1.4103 | **5.1689** |
+| Telecom | 0.6 | 10 (0.08) | 1.80 | 0.3027 | 2.3946 | 20.000 | 3.0000 | **7.7586** |
 
 **Step 3. Contested?** Total requested = 1640.000 kW > supply 486.902 kW, so the excess to remove is **1153.098 kW**. Negotiation opens.
 
-**Step 4. Rounds.** Each agent's phase-1 floor: its hard floor if reserve ≥ 30%, otherwise its full critical min (it *holds firm*). In each round every agent that can still concede takes the share (1/u_i) / Σ(1/u_j) of the remaining excess, capped at 25% of its phase slack and at its floor. All agents decide from the same public snapshot.
+**Step 4. Rounds.** Each agent's phase-1 floor: its hard floor if reserve ≥ 30%, otherwise its full critical min (it *holds firm*). In each round every agent that can still concede takes the share (slack_i/u_i) / Σ(slack_j/u_j) of the remaining excess, capped at 25% of its phase slack and at its floor. All agents decide from the same public snapshot.
 
-- Emergency Services holds firm at 120.0 kW: reserve only 26%, near failure.
-- Telecom holds firm at 80.0 kW: reserve only 29%, near failure.
+- Emergency Services holds firm at 120.0 kW: reserve only 28%, near failure.
 
 | Round | Hospital | Emergency Services | Water Pumping | Telecom | Σ offers | Excess after |
 |---:|---:|---:|---:|---:|---:|---:|
 | start | 690.0 | 260.0 | 480.0 | 210.0 | 1640.0 | 1153.1 |
-| R1 | 545.0 (−145.0) | 225.0 (−35.0) | 370.0 (−110.0) | 177.5 (−32.5) | 1317.5 | 830.6 |
-| R2 | 400.0 (−145.0) | 190.0 (−35.0) | 260.0 (−110.0) | 145.0 (−32.5) | 995.0 | 508.1 |
-| R3 | 269.9 (−130.1) | 155.0 (−35.0) | 150.0 (−110.0) | 112.5 (−32.5) | 687.4 | 200.5 |
-| R4 | 218.6 (−51.3) | 120.0 (−35.0) | 92.7 (−57.3) | 80.0 (−32.5) | 511.3 | 24.4 |
-| R5 | 207.1 (−11.5) | 120.0 | 79.8 (−12.9) | 80.0 | 486.9 | 0.0 |
+| R1 | 545.0 (−145.0) | 225.0 (−35.0) | 370.0 (−110.0) | 157.5 (−52.5) | 1297.5 | 810.6 |
+| R2 | 400.0 (−145.0) | 190.0 (−35.0) | 260.0 (−110.0) | 105.0 (−52.5) | 955.0 | 468.1 |
+| R3 | 255.0 (−145.0) | 155.0 (−35.0) | 150.0 (−110.0) | 52.5 (−52.5) | 612.5 | 125.6 |
+| R4 | 211.6 (−43.4) | 137.5 (−17.5) | 100.9 (−49.1) | 36.9 (−15.6) | 486.9 | 0.0 |
 
-Result: Agreement after 5 round(s): 486.9 kW allocated of 486.9 kW.
+Result: Agreement after 4 round(s): 486.9 kW allocated of 486.9 kW.
 
 **Fairness ledger** (share = conceded ÷ desired; Δcredits = 10 × (share − average share)):
 
-- Hospital conceded 482.9 kW in total (107% of its load vs 94% average), reserve 37% → +1.4 fairness credits
-- Emergency Services conceded 140.0 kW in total (70% of its load vs 94% average), reserve 26% → -2.4 fairness credits
-- Water Pumping conceded 400.2 kW in total (111% of its load vs 94% average), reserve 34% → +1.7 fairness credits
-- Telecom conceded 130.0 kW in total (87% of its load vs 94% average), reserve 29% → -0.7 fairness credits
+- Hospital conceded 478.4 kW in total (106% of its load vs 97% average), reserve 34% → +0.9 fairness credits
+- Emergency Services conceded 122.5 kW in total (61% of its load vs 97% average), reserve 28% → -3.6 fairness credits
+- Water Pumping conceded 379.1 kW in total (105% of its load vs 97% average), reserve 35% → +0.8 fairness credits
+- Telecom conceded 173.1 kW in total (115% of its load vs 97% average), reserve 30% → +1.8 fairness credits
 
 **Step 5. Validator** (integer watts):
 
 - ✔ C1 agent set: ok
 - ✔ C2 integer watts: ok
 - ✔ C3 0 <= a_i <= request_i: ok
-- ✔ C4 sum <= supply: 486901 W <= 486902 W
+- ✔ C4 sum <= supply: 486900 W <= 486902 W
 
 Committed atomically: the engine swapped in the new state for step 39.
 
@@ -222,10 +232,10 @@ Committed atomically: the engine swapped in the new state for step 39.
 
 | Agent | Allocated | Reserve discharge | Served | Status | Reserve after | Credits after | Damage this step |
 |---|---:|---:|---:|---|---:|---:|---:|
-| Hospital | 207.058 kW | 152.942 kW | 360.000 kW | STRESSED | 33.5% | 4.613 | 90.000 |
-| Emergency Services | 120.000 kW | 0.000 kW | 120.000 kW | STRESSED | 26.2% | 0.000 | 43.200 |
-| Water Pumping | 79.843 kW | 120.157 kW | 200.000 kW | STRESSED | 30.1% | 6.325 | 63.600 |
-| Telecom | 80.000 kW | 0.000 kW | 80.000 kW | STRESSED | 28.6% | 18.500 | 22.260 |
+| Hospital | 211.601 kW | 148.399 kW | 360.000 kW | STRESSED | 31.0% | 7.531 | 90.000 |
+| Emergency Services | 137.456 kW | 0.000 kW | 137.456 kW | STRESSED | 28.3% | 0.000 | 29.552 |
+| Water Pumping | 100.942 kW | 99.058 kW | 200.000 kW | STRESSED | 31.6% | 4.925 | 63.600 |
+| Telecom | 36.901 kW | 43.099 kW | 80.000 kW | STRESSED | 26.9% | 20.000 | 18.900 |
 
-Step damage 219.060; cumulative 1483.009.
+Step damage 202.052; cumulative 1380.740.
 <!-- WORKED-EXAMPLE:END -->

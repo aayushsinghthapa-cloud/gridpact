@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GridPact · Mumbai</title>
+<meta name="description" content="GridPact on Mumbai: real population, real loads and recorded disasters, simulated over 24 hours under four allocation policies.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b1017'/%3E%3Cpath d='M18 4 8 18h7l-2 10 11-15h-7z' fill='%23f3efe4'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="city.css">
+</head>
+<body class="city-page">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-hospital" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M12 8v8M8 12h8"/></symbol>
+    <symbol id="i-water" viewBox="0 0 24 24"><path d="M12 3.5c3.2 4 5.5 7.2 5.5 10.2a5.5 5.5 0 0 1-11 0c0-3 2.3-6.2 5.5-10.2Z"/></symbol>
+    <symbol id="i-emergency" viewBox="0 0 24 24"><path d="M7 17v-5a5 5 0 0 1 10 0v5"/><path d="M5 17h14v3H5zM12 3v2M4.2 7.2l1.4 1.4M19.8 7.2l-1.4 1.4"/></symbol>
+    <symbol id="i-telecom" viewBox="0 0 24 24"><path d="M12 10v11M9 21h6M8.5 7.5a5 5 0 0 0 0 5M15.5 7.5a5 5 0 0 1 0 5M6 5a8.5 8.5 0 0 0 0 10M18 5a8.5 8.5 0 0 1 0 10"/><circle cx="12" cy="10" r="1.2"/></symbol>
+    <symbol id="i-homes" viewBox="0 0 24 24"><path d="M3.5 11 12 4l8.5 7M6 9.5V20h12V9.5M10 20v-5h4v5"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10-6.5z"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8.5 5.5v13M15.5 5.5v13"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 3 5 14h6l-1 7 8-11h-6z"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3.5 5 6v5.5c0 4.3 3 7.6 7 9 4-1.4 7-4.7 7-9V6z"/><path d="m9 12 2.2 2.2L15.5 10"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-6.5-6.2-6.5-11a6.5 6.5 0 0 1 13 0c0 4.8-6.5 11-6.5 11Z"/><circle cx="12" cy="10" r="2.3"/></symbol>
+    <symbol id="i-ext" viewBox="0 0 24 24"><path d="M14 4.5h5.5V10M19.5 4.5 11 13M17 14v5.5H4.5V7H10"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5.5M11 6.5 5.5 12l5.5 5.5"/></symbol>
+    <pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="7" height="7" fill="var(--deficit-bg)" stroke="none"/>
+      <line x1="0.5" y1="0" x2="0.5" y2="7" stroke="var(--deficit)" stroke-width="1.2" stroke-opacity="0.6"/>
+    </pattern>
+  </defs>
+</svg>
+
+<header class="bar">
+  <div class="brand">
+    <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-bolt"/></svg>
+    <span class="brand-name">GridPact</span>
+  </div>
+  <nav class="tabs" aria-label="Pages">
+    <a class="tab" href="index.html">Live demo</a>
+    <a class="tab" href="city.html" aria-current="page">Mumbai, real data</a>
+  </nav>
+  <div class="bar-status" id="run-status" aria-live="polite">Loading city data…</div>
+</header>
+
+<main class="city">
+  <section class="city-intro" aria-labelledby="city-title">
+    <div class="intro-text">
+      <h1 id="city-title">Mumbai, 24 hours</h1>
+      <p class="lede">The same engine, validator and four policies, run on the real city: census population, measured loads and recorded disasters. Every number on this page links to where it came from, and every assumption is labelled as one.</p>
+    </div>
+    <dl class="facts" id="facts"></dl>
+  </section>
+
+  <section class="picker" aria-labelledby="picker-title">
+    <h2 id="picker-title" class="sr-only">Choose a disaster</h2>
+    <div class="disasters" id="disasters" role="radiogroup" aria-label="Disaster"></div>
+    <div class="controls">
+      <label class="ctl ctl-intensity">
+        <span class="ctl-label">Intensity <b id="intensity-out">1.00×</b> <span id="intensity-note" class="ctl-note">as recorded</span></span>
+        <input id="intensity" type="range" min="0.5" max="1.5" step="0.05" value="1" aria-describedby="intensity-note">
+      </label>
+      <label class="ctl ctl-seed">
+        <span class="ctl-label">Seed</span>
+        <input id="seed" type="number" inputmode="numeric" min="0" max="999999" value="41">
+      </label>
+      <div class="ctl ctl-policy">
+        <span class="ctl-label" id="policy-label">Map and charts follow</span>
+        <div class="seg" id="policy" role="radiogroup" aria-labelledby="policy-label"></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="city-grid">
+    <aside class="map-col">
+      <section class="panel panel-map" aria-labelledby="map-title">
+        <div class="panel-head">
+          <div>
+            <h2 id="map-title">Who has power</h2>
+            <p class="panel-note" id="map-sub">24 BMC wards · households with power</p>
+          </div>
+          <span class="map-clock" id="map-clock">00:00</span>
+        </div>
+        <div class="map-wrap" id="map" role="img" aria-label="Map of Mumbai's 24 wards shaded by share of households with power"></div>
+        <div class="map-legend" aria-hidden="true">
+          <span>0%</span><span class="ramp"></span><span>100% powered</span>
+        </div>
+        <div class="zones" id="zones"></div>
+        <div class="scrub">
+          <button id="play" class="btn btn-icon" type="button" aria-label="Play the day" aria-pressed="false">
+            <svg aria-hidden="true"><use href="#i-play"/></svg>
+          </button>
+          <input id="hour" type="range" min="0" max="95" step="1" value="40" aria-label="Time of day">
+        </div>
+      </section>
+    </aside>
+
+    <div class="main-col">
+      <section class="panel panel-record" aria-labelledby="record-title">
+        <div class="record-head">
+          <span class="kind-badge" id="record-kind"></span>
+          <h2 id="record-title"></h2>
+          <p class="record-date" id="record-date"></p>
+        </div>
+        <p class="record-summary" id="record-summary"></p>
+        <div class="record-grid">
+          <dl class="record-facts" id="record-facts"></dl>
+          <ol class="timeline" id="timeline" aria-label="Recorded timeline"></ol>
+        </div>
+        <p class="assumption" id="record-assumption"></p>
+      </section>
+
+      <section class="panel" aria-labelledby="supply-title">
+        <div class="panel-head">
+          <div>
+            <h2 id="supply-title">City supply against demand</h2>
+            <p class="panel-note">MW, 15-minute steps. The hatched wedge is demand the grid could not meet.</p>
+          </div>
+          <div class="chart-readout" id="supply-readout"></div>
+        </div>
+        <div class="legend" id="supply-legend"></div>
+        <div class="chart chart-city" id="supply-chart"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="services-title">
+        <div class="panel-head">
+          <div>
+            <h2 id="services-title">Critical services, policy by policy</h2>
+            <p class="panel-note">Share of each sector's normal load actually delivered (grid plus its own backup). Dotted line: its critical minimum.</p>
+          </div>
+        </div>
+        <div class="legend" id="services-legend"></div>
+        <div class="services" id="services"></div>
+      </section>
+
+      <section class="panel panel-outcome" aria-labelledby="outcome-title">
+        <div class="panel-head">
+          <div>
+            <h2 id="outcome-title">Outcome and forecast</h2>
+            <p class="panel-note" id="outcome-note"></p>
+          </div>
+        </div>
+        <p class="outcome-head" id="outcome-head"></p>
+        <div class="table-wrap"><table class="outcome-table" id="outcome-table"></table></div>
+        <p class="guarantee-line" id="guarantee-line"><svg aria-hidden="true"><use href="#i-shield"/></svg><span></span></p>
+      </section>
+    </div>
+  </div>
+
+  <section class="panel panel-model" aria-labelledby="model-title">
+    <div class="panel-head">
+      <div>
+        <h2 id="model-title">How the numbers are built</h2>
+        <p class="panel-note">Each sector becomes one GridPact agent. <span class="tag tag-measured">Measured</span> published figure · <span class="tag tag-assumption">Assumption</span> our modelling choice, editable in <code>data/cities/mumbai.json</code></p>
+      </div>
+    </div>
+    <div class="sectors" id="sectors"></div>
+    <div class="model-notes">
+      <div>
+        <h3>Harm, in one unit</h3>
+        <p>Every shortfall is converted to <b>household-hours without power</b>: one household dark for one hour counts 1. The weights for a bed, a resident without water or signal, or a fire station are value judgements, shown on each card above. They are the only way to compare a dark hospital ward with a dark flat, and you should argue with them.</p>
+      </div>
+      <div>
+        <h3>What this model leaves out</h3>
+        <ul id="limits"></ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel panel-sources" aria-labelledby="sources-title">
+    <div class="panel-head">
+      <h2 id="sources-title">Sources</h2>
+      <span class="panel-note" id="sources-note"></span>
+    </div>
+    <ol class="sources" id="sources"></ol>
+  </section>
+</main>
+
+<div class="tooltip city-tt" id="tt" hidden></div>
+<script src="charts.js"></script>
+<script src="city.js"></script>
+</body>
+</html>

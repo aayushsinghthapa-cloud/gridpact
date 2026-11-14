@@ -63,7 +63,7 @@ def main():
     p("Request max = desired + recharge want. Request min = max(0, critical min − discharge available), "
       "rounded **up** to whole watts.")
     p("")
-    p("Urgency bid u = weight × (1 + e × streak) × (1 + γ × (1 − reserve fraction)) × (1 + β × credits), "
+    p("Urgency bid u = weight × harm rate (1.0 for every core utility) × (1 + e × streak) × (1 + γ × (1 − reserve fraction)) × (1 + β × credits), "
       f"with γ = {A.GAMMA_RESERVE}, β = {A.BETA_CREDITS}:")
     p("")
     p("| Agent | weight | streak (e) | escalation | reserve fraction | scarcity | credits | credit factor | **bid u** |")
@@ -85,7 +85,7 @@ def main():
     p("")
     p("**Step 4. Rounds.** Each agent's phase-1 floor: its hard floor if reserve ≥ 30%, otherwise its full "
       "critical min (it *holds firm*). In each round every agent that can still concede takes the share "
-      "(1/u_i) / Σ(1/u_j) of the remaining excess, capped at 25% of its phase slack and at its floor. "
+      "(slack_i/u_i) / Σ(slack_j/u_j) of the remaining excess, capped at 25% of its phase slack and at its floor. "
       "All agents decide from the same public snapshot.")
     p("")
     holds = [l for l in rec["log"] if l["kind"] == "hold"]

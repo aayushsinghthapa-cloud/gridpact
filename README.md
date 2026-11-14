@@ -17,10 +17,10 @@ physics (never more than the supply, never more than requested) and commits each
 
 | Scenario | GridPact damage vs strict priority | vs proportional | vs equal split | GridPact failure events | Capacity violations |
 |---|---:|---:|---:|---:|---:|
-| Cyclone landfall | −76.0% | −15.8% | −66.3% | 0 | 0 |
-| Cascading substation failures | −73.3% | −3.8% | −64.0% | 0 | 0 |
-| Long heatwave brownout (36 h) | −70.1% | −8.2% | −74.4% | 0 | 0 |
-| Metro stress test (24 utilities) | −73.7% | −8.9% | −73.8% | 0 | 0 |
+| Cyclone landfall | −75.6% | −14.8% | −65.9% | 0 | 0 |
+| Cascading substation failures | −72.9% | −2.3% | −63.5% | 0 | 0 |
+| Long heatwave brownout (36 h) | −69.9% | −7.4% | −74.2% | 0 | 0 |
+| Metro stress test (24 utilities) | −72.7% | −5.2% | −72.8% | 0 | 0 |
 
 GridPact had the lowest damage in 10/10 seeds in every scenario. Full tables, a lying-agent
 experiment, scaling to 192 agents and honest limitations: **[RESULTS.md](RESULTS.md)**
@@ -40,9 +40,9 @@ Other commands:
 
 ```bash
 python3 gridpact.py check                               # pre-flight on the demo laptop: tests, scenarios, port, narration
-python3 gridpact.py test                                # all 54 tests (the hard guarantees)
+python3 gridpact.py test                                # all 69 tests (the hard guarantees + real-city checks)
 python3 gridpact.py run cyclone_landfall --seed 41      # headless: every policy, every metric
-python3 gridpact.py results                             # regenerate RESULTS.md (~7 s)
+python3 gridpact.py results                             # regenerate RESULTS.md and CITY.md (~12 s)
 python3 scripts/worked_example.py                       # regenerate the worked example in ALGORITHM.md
 python3 gridpact.py serve --port 9000 --no-browser      # different port, don't auto-open a browser
 ```
@@ -59,6 +59,19 @@ Pick one in the dashboard's **Scenario** menu, or headless with `python3 gridpac
 | `stress_metro_24` | Scalability: 24 utilities (hospitals, water, emergency, telecom, shelters) through a 50% collapse. |
 
 Scenarios and agents are JSON in [`data/`](data/). Add a utility or a disaster by editing a file.
+
+### Mumbai, on real data
+
+Open **Mumbai, real data** from the dashboard header (`http://127.0.0.1:8041/city.html`). The
+same engine runs on Census 2011 population for all 24 BMC wards, published loads for hospitals,
+water pumping, the mobile network and fire/police stations, and four recorded or forecast
+disasters: the 12 Oct 2020 grid failure, the 26 Jul 2005 deluge, Cyclone Tauktae (2021), and the
+2020 failure striking at the 2023 record peak. Each run is a 24-version ensemble forecast with
+10th–90th percentile ranges. Every number links to its source, and every assumption is labelled.
+What we learned, including the three bugs real data exposed and why GridPact ties rather than
+beats the best baseline there: **[CITY.md](CITY.md)**.
+
+![Mumbai on real data](docs/screenshots/city-mumbai.webp)
 
 ![24-agent stress test](docs/screenshots/stress-24-agents.webp)
 
@@ -120,12 +133,13 @@ gridpact/                engine (standard library only)
   metrics.py             all metrics + policy comparison
   config.py, models.py   data loading and frozen records
   live.py                live run + baselines in lockstep
+  city.py                Mumbai: sourced data -> scenario, ensemble forecast
   server.py              offline HTTP server + JSON API
   narration.py           optional LLM narration
-web/                     dashboard (vanilla JS, SVG charts, bundled fonts)
-data/                    agents and scenarios (JSON)
+web/                     dashboard + Mumbai page (vanilla JS, SVG charts, bundled fonts)
+data/                    agents, scenarios, and cities/mumbai*.json (JSON)
 scripts/                 results generator, worked example, stress-agent generator
-tests/                   54 unittest tests
+tests/                   69 unittest tests
 ```
 
 Design context for the UI lives in [PRODUCT.md](PRODUCT.md) (Impeccable design skill).

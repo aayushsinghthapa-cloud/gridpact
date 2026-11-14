@@ -10,6 +10,8 @@ API (all JSON):
   POST /api/inject    {session, event_id}      -> queue an event for the next step
   POST /api/compare   {session}                -> all policies on the same seed + event log
   POST /api/narrate   {session, step}          -> optional LLM narration (off by default)
+  GET  /api/city                               -> Mumbai: sourced data, derivations, disasters, ward map
+  POST /api/city/run  {disaster, intensity, seed} -> all four policies + ensemble forecast
 """
 from __future__ import annotations
 
@@ -20,7 +22,7 @@ import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from . import narration
+from . import city, narration
 from .config import ConfigError, list_scenarios, load_scenario
 from .metrics import compare
 from .live import LiveSession
@@ -30,6 +32,9 @@ WEB_DIR = Path(__file__).resolve().parent.parent / "web"
 _sessions: dict = {}
 _lock = threading.Lock()      # one simulation mutation at a time
 MAX_SESSIONS = 20
+_city_cache: dict = {}          # (disaster, intensity, seed) -> result; runs are deterministic
+MAX_CITY_CACHE = 64
+_city_lock = threading.Lock()   # separate from _lock: a city run never touches live sessions
 
 
 def scenario_info(sc) -> dict:
@@ -84,6 +89,11 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == "/api/scenarios":
             return self._json(200, {"scenarios": list_scenarios(),
                                     "narration": narration.enabled()})
+        if self.path == "/api/city":
+            try:
+                return self._json(200, city.city_info("mumbai"))
+            except (ConfigError, OSError, ValueError) as e:
+                return self._json(500, {"error": f"city data problem: {e}"})
         clean = self.path.split("?", 1)[0]
         path = "index.html" if clean in ("/", "") else clean.lstrip("/")
         target = (WEB_DIR / path).resolve()
@@ -100,6 +110,8 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         try:
             body = self._body()
+            if self.path == "/api/city/run":
+                return self._json(200, self._city_run(body))
             with _lock:
                 if self.path == "/api/session":
                     sc = load_scenario(str(body.get("scenario", "cyclone_landfall")))
@@ -146,6 +158,30 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(400, {"error": str(e)})
         except Exception as e:  # noqa: BLE001 - never drop the connection mid-demo
             return self._json(500, {"error": f"internal error: {type(e).__name__}: {e}"})
+
+
+def _city_key(body: dict):
+    lo, hi = city.INTENSITY_RANGE
+    intensity = round(min(hi, max(lo, float(body.get("intensity", 1.0)))) * 20) / 20  # 0.05 steps
+    return str(body.get("disaster", "grid_2020")), intensity, int(body.get("seed", 41))
+
+
+def city_run_cached(body: dict) -> dict:
+    """City runs are pure functions of (disaster, intensity, seed): cache them."""
+    key = _city_key(body)
+    with _city_lock:
+        return _city_run_locked(key)
+
+
+def _city_run_locked(key) -> dict:
+    if key not in _city_cache:
+        if len(_city_cache) >= MAX_CITY_CACHE:
+            _city_cache.pop(next(iter(_city_cache)))
+        _city_cache[key] = city.run_city("mumbai", key[0], key[1], key[2])
+    return _city_cache[key]
+
+
+Handler._city_run = staticmethod(city_run_cached)
 
 
 def serve(host: str = "127.0.0.1", port: int = 8041) -> None:

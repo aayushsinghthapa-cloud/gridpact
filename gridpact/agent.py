@@ -104,9 +104,15 @@ class UtilityAgent:
     def urgency(self, st: AgentState) -> float:
         """The urgency bid, computed only from my own state.
 
-            u = weight x escalation x reserve_scarcity x (1 + beta x credits)
+            u = weight x harm_rate x escalation x reserve_scarcity x (1 + beta x credits)
 
         weight            how critical the utility is (config)
+        harm_rate         my own damage per kW of comfort shortfall (damage_soft).
+                          The bid is meant to say "this is how much harm each kW
+                          cut from me does". With every rate at 1.0 (all core
+                          scenarios) this term is invisible; on a real city it
+                          matters: a kW cut from a hospital does far more harm
+                          than a kW cut from the residential bulk. (DECISIONS D-17)
         escalation        1 + e x (consecutive steps I have been short)
         reserve_scarcity  1 + gamma x (1 - reserve fraction): empty backup -> x3
         credits           fairness credits earned by conceding earlier
@@ -114,6 +120,7 @@ class UtilityAgent:
         c = self.cfg
         streak = min(st.shortfall_streak, c.escalation_cap_steps)
         u = (c.weight
+             * c.damage_soft
              * (1.0 + c.escalation * streak)
              * (1.0 + GAMMA_RESERVE * (1.0 - self.reserve_frac(st)))
              * (1.0 + BETA_CREDITS * st.credits))
@@ -143,18 +150,23 @@ class UtilityAgent:
         """How many watts I give up this round.
 
         Rule: the remaining excess is split among agents that can still
-        concede, in proportion to 1/urgency (the least urgent gives the most).
-        Each agent computes ITS OWN share from the public bids, so no central
-        party assigns concessions. The amount is capped by an increment
-        (25% of my slack this phase) so concessions happen gradually over
-        rounds, and by my floor.
+        concede, in proportion to slack / urgency: what I can still give,
+        discounted by how urgent I am. So a less urgent agent gives a larger
+        FRACTION of its slack, and a small agent is never asked to give more
+        than its size warrants. (Splitting by 1/urgency alone, in absolute
+        watts, made a 37 MW hospital concede everything next to a 3,000 MW
+        residential load: DECISIONS D-17.) Each agent computes ITS OWN share
+        from public numbers (offers, floors, bids), so no central party
+        assigns concessions. The amount is capped by an increment (25% of my
+        slack this phase) so concessions happen gradually over rounds, and by
+        my floor.
         """
         slack = my_offer - my_floor
         if slack <= 0 or pub.excess_w <= 0:
             return 0
         willing = [a for a in pub.offers if pub.offers[a] > pub.floors[a]]
-        inv_total = sum(1.0 / pub.bids[a] for a in willing)
-        my_share = (1.0 / pub.bids[self.id]) / inv_total
+        total = sum((pub.offers[a] - pub.floors[a]) / pub.bids[a] for a in willing)
+        my_share = (slack / pub.bids[self.id]) / total
         target = my_share * pub.excess_w
         increment = max(MIN_INCREMENT_W, INCREMENT_FRAC * phase_slack_w)
         # ceil -> always progress by >= 1 W; overshoot is at most 1 W per agent,

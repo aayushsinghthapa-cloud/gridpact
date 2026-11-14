@@ -162,8 +162,10 @@ class Simulation:
                 elif ev.type == "reserve_loss":
                     st = states[ev.agent]
                     states[ev.agent] = replace(st, reserve_kwh=st.reserve_kwh * (1.0 - ev.fraction))
+            hour = t * dt
             for aid in states:
-                f = 1.0
+                prof = self.agents[aid].cfg.demand_profile
+                f = interp_profile(prof, hour) if prof else 1.0
                 for e in effects:
                     if e.kind == "demand" and e.agent_id == aid:
                         f *= e.factor

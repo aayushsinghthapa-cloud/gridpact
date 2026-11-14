@@ -56,6 +56,10 @@ LIMITATIONS = """\
   credits only from observable concessions) but does not prevent lying: the honesty experiment
   above shows a greedy agent *does* gain. Real deployment would need audited meters and
   penalties.
+- **GridPact is not optimal.** It beats every baseline here, but the honesty experiment found a
+  better allocation by accident (a non-conceding hospital lowered total damage in the cyclone),
+  and on real Mumbai data it only ties the best baseline (CITY.md). An optimal benchmark (an LP
+  with perfect information) would measure the gap; we have not built it.
 - **Reserves are kWh-equivalents.** A water tank or diesel tank is modelled as stored energy with
   a discharge and recharge rate; real pumps and generators have start-up limits and efficiencies
   we ignore.
@@ -154,7 +158,18 @@ def honesty():
     for name, lb, la, ob, oa, tb, ta, fe, cv in rows:
         lines.append(f"| {name} | {lb:,.0f} → {la:,.0f} | {ob:,.0f} → {oa:,.0f} ({pct_change(oa, ob):+.0f}%) | "
                      f"{tb:,.0f} → {ta:,.0f} ({pct_change(ta, tb):+.0f}%) | {fe} | {cv} |")
-    return "\n".join(lines)
+    notes = []
+    for name, lb, la, ob, oa, tb, ta, fe, cv in rows:
+        if oa > ob:
+            notes.append(f"A lying {name} gains at everyone else's expense ({pct_change(oa, ob):+.0f}% for the others).")
+        else:
+            notes.append(
+                f"A lying {name} *lowered* everyone else's damage too ({pct_change(oa, ob):+.0f}%), and total damage "
+                f"by {abs(pct_change(ta, tb)):.0f}%. That is not a case for lying. It shows the honest negotiation "
+                f"is **not optimal** here: a liar that never concedes forces deadlocks, the fallback then serves "
+                f"agents in order of their bids, and that ordering suited this storm better than the negotiated "
+                f"split. We report it as an open finding (see Limitations).")
+    return "\n".join(lines) + "\n\n" + " ".join(notes)
 
 
 def scaled_scenario(k):
@@ -215,8 +230,7 @@ def main():
     md += ["## What if an agent lies?", "",
            "One agent is switched to the `greedy` strategy: it inflates its urgency bid ×5 (clamped at the cap "
            "of 50) and never concedes. Cyclone landfall, seed 41, GridPact policy.", "", honesty(), "",
-           "The validator still guarantees physical safety (zero violations): lying cannot break the grid. "
-           "But lying is not free for everyone else, which is why this is listed under limitations.", "",
+           "The validator still guarantees physical safety (zero violations): lying cannot break the grid.", "",
            "## Scalability", "",
            "The 24-utility metro replicated k times (supply scaled by k), seed 41, full 24 h run. "
            f"Measured on {platform.machine()} / Python {platform.python_version()}.", "", scaling(), "",

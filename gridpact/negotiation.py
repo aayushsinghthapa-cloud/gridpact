@@ -31,9 +31,11 @@ def safe_fallback(supply_w: int, requests: Mapping[str, Request],
     """Deterministic, constraint-safe allocation used when negotiation can't converge.
 
     1. Sort agents by announced urgency bid (highest first; ties -> agent id).
-    2. Walk the list giving each agent its hard floor (request.min_w), as long
-       as supply remains. This keeps as many utilities alive as possible,
-       most urgent first.
+    2. Walk the list giving each agent its hard floor (request.min_w), but only
+       if the WHOLE floor fits in what remains. This keeps as many utilities
+       alive as possible, most urgent first. A partial floor keeps nobody
+       alive: on Mumbai it once handed all 280 MW to homes that needed 424 MW
+       (and failed anyway) while hospitals got nothing (DECISIONS D-18).
     3. Walk the list again, topping each agent up to its ceiling (its last
        offer, or its request max) from whatever supply is left.
 
@@ -44,9 +46,10 @@ def safe_fallback(supply_w: int, requests: Mapping[str, Request],
     remaining = max(0, int(supply_w))
     alloc = {a: 0 for a in requests}
     for a in order:
-        g = min(requests[a].min_w, requests[a].max_w, remaining)
-        alloc[a] = max(0, g)
-        remaining -= alloc[a]
+        floor = max(0, min(requests[a].min_w, requests[a].max_w))
+        if floor <= remaining:
+            alloc[a] = floor
+            remaining -= floor
     for a in order:
         cap = requests[a].max_w if ceilings is None else min(ceilings[a], requests[a].max_w)
         g = max(0, min(cap - alloc[a], remaining))
@@ -167,7 +170,12 @@ class GridPactPolicy:
             return Proposal(dict(offers), rounds, True, None, log, conceded, bids, deltas)
 
         reason = "round cap reached" if hit_cap else "deadlock: critical floors exceed supply"
-        alloc = safe_fallback(supply_w, requests, bids, ceilings=offers)
+        # Round cap: offers were converging, so they stay as ceilings. Deadlock:
+        # the concessions were made to reach an agreement that cannot exist, so
+        # they are void and top-up works from the original requests. Otherwise
+        # agents that conceded to zero for an unsurvivable floor get nothing back
+        # (DECISIONS D-18).
+        alloc = safe_fallback(supply_w, requests, bids, ceilings=offers if hit_cap else None)
         log.append({"round": rounds, "kind": "fallback",
                     "text": f"No agreement ({reason}). Fallback: hard floors by urgency, then top-up."})
         for a in sorted(ids, key=lambda x: (-bids[x], x)):

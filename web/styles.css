@@ -122,6 +122,9 @@ select:hover, input:hover { border-color: #46597a; }
 .tab { font: 500 13.5px var(--font); color: var(--text-2); background: none; border: 0; padding: 6px 12px; border-radius: 5px; cursor: pointer; }
 .tab:hover { color: var(--text); }
 .tab[aria-selected="true"] { background: var(--panel-3); color: var(--text); }
+.nav-city { display: inline-flex; align-items: center; gap: 5px; font: 500 13.5px var(--font); color: var(--text-2); text-decoration: none; padding: 6px 4px; border-bottom: 1px solid var(--line-strong); }
+.nav-city:hover { color: var(--text); border-color: var(--ivory); }
+.nav-city svg { width: 14px; height: 14px; transform: rotate(-90deg); }
 
 /* ---------------- guarantees strip ---------------- */
 .guarantees {

@@ -1,0 +1,261 @@
+{
+  "id": "mumbai",
+  "name": "Mumbai",
+  "full_name": "Greater Mumbai (Brihanmumbai Municipal Corporation area)",
+  "location": {"lat": 19.0760, "lon": 72.8777, "label": "19.08° N, 72.88° E", "source": "wiki_mumbai"},
+  "area_km2": {"value": 603.4, "source": "wiki_mumbai"},
+  "accessed": "2026-11-14",
+
+  "_comment": "Every number below carries a source id (see 'sources') and a kind: measured = published figure; derived = arithmetic on published figures (formula shown in the dashboard); assumption = our modelling choice, stated openly and editable here. Nothing in this file is tuned to make any policy win.",
+
+  "population": {
+    "total": 12442373, "households": 2779943, "slum": 6534460, "year": 2011, "source": "census_mcgm",
+    "wards": {
+      "A": [185014, 43866, 22282], "B": [127290, 27140, 12711], "C": [166161, 36479, 16571],
+      "D": [346866, 77556, 34699], "E": [393286, 78346, 124194], "F/S": [360972, 79733, 180128],
+      "F/N": [529034, 119624, 238128], "G/S": [377749, 83457, 124306], "G/N": [599039, 128138, 361674],
+      "H/E": [557239, 120266, 388923], "H/W": [307581, 72943, 82552], "K/E": [823885, 190845, 572818],
+      "K/W": [748688, 168076, 215678], "P/S": [463507, 106922, 230829], "P/N": [941366, 211642, 708247],
+      "R/S": [691229, 159639, 414395], "R/C": [562162, 134795, 172849], "R/N": [431368, 104091, 281151],
+      "L": [902225, 186833, 758108], "M/E": [807720, 166400, 685994], "M/W": [411893, 93607, 164992],
+      "N": [622853, 137885, 249229], "S": [743783, 169962, 408442], "T": [341463, 81698, 85560]
+    },
+    "ward_fields": ["population", "households", "slum_population"]
+  },
+
+  "zones": {
+    "_note": "Distribution licensee areas. BEST serves the island city; the suburbs were Reliance Energy's area in 2005 and are Adani Electricity's today (Tata Power overlaps citywide). Census groups wards the same way.",
+    "island_city": {"label": "Island city (BEST area)", "wards": ["A", "B", "C", "D", "E", "F/S", "F/N", "G/S", "G/N"], "source": "census_mcgm"},
+    "western_suburbs": {"label": "Western suburbs", "wards": ["H/E", "H/W", "K/E", "K/W", "P/S", "P/N", "R/S", "R/C", "R/N"], "source": "census_mcgm"},
+    "eastern_suburbs": {"label": "Eastern suburbs", "wards": ["L", "M/E", "M/W", "N", "S", "T"], "source": "census_mcgm"}
+  },
+
+  "grid": {
+    "record_peak": {"mw": 4129, "when": "Fri 9 Jun 2023, 15:30–15:45", "hour": 15.5, "split": {"Adani Electricity": 2161, "Tata Power": 1003}, "temp": "36.7 °C at Santacruz", "source": "fpj_peak_2023"},
+    "utility_split": {"total_mw": 4041, "adani_mw": 2070, "tata_mw": 1005, "best_mw": "880–900", "when": "Tue 16 Apr (peak day)", "source": "mumbailive_split"},
+    "daily_min": {"mw": 2140, "hour": 5, "when": "11 Oct 2024", "source": "sldc_oct2024"},
+    "daily_max": {"mw": 3944, "hour": 16, "when": "23 Oct 2024", "source": "sldc_oct2024"},
+    "supply_margin": {"value": 0.03, "kind": "assumption", "note": "Before a disaster strikes, available supply is taken as 3% above demand (no load shedding on a normal day)."},
+    "noise_frac": {"value": 0.02, "kind": "assumption", "note": "±2% random variation in available supply per 15-minute step (seeded, reproducible)."},
+    "shape": {
+      "kind": "derived",
+      "note": "Daily demand as a fraction of the day's peak. The 05:00 trough (2,140 ÷ 3,944 = 0.543) and the afternoon peak are from the Maharashtra SLDC October 2024 report; the in-between points are a smooth interpolation we chose (assumption).",
+      "points": [[0, 0.68], [3, 0.58], [5, 0.543], [8, 0.66], [10, 0.84], [13, 0.96], [15.5, 1.0], [16, 1.0], [19, 0.9], [21, 0.84], [24, 0.68]]
+    }
+  },
+
+  "sectors": [
+    {
+      "id": "hospital", "name": "Hospitals", "kind": "hospital", "priority_rank": 1, "weight": 1.0,
+      "unit": "beds", "unit_singular": "bed",
+      "inputs": [
+        {"id": "beds_public", "label": "Public hospital beds (civic + JJ)", "value": 17190, "kind": "measured", "source": "beds_qoc"},
+        {"id": "beds_private", "label": "Private hospital beds", "value": 31000, "kind": "measured", "source": "beds_qoc"},
+        {"id": "kwh_bed_public", "label": "Energy per public bed, kWh/yr (upper end of medical-college range 756–2,753)", "value": 2753, "kind": "measured", "source": "ncdc_hospitals"},
+        {"id": "kwh_bed_private", "label": "Energy per private bed, kWh/yr (500-bed private hospital, 2019-20)", "value": 8860, "kind": "measured", "source": "ganga_hospital"},
+        {"id": "critical_share", "label": "Share of hospital load that is life-critical (ICU, OT, emergency, oxygen)", "value": 0.40, "kind": "assumption"},
+        {"id": "backup_hours", "label": "On-site diesel, hours at critical load", "value": 12, "kind": "assumption"},
+        {"id": "backup_cover", "label": "Generator sets sized for this share of critical load", "value": 1.0, "kind": "assumption"}
+      ],
+      "reserve_label": "Diesel generators", "reserve_initial_frac": 0.9,
+      "harm": {"soft": 4, "critical": 150, "kind": "assumption", "note": "harm per bed-hour: 4 when non-critical wards lose power, 150 when life-critical load is unserved"},
+      "escalation": 0.10
+    },
+    {
+      "id": "water", "name": "Water pumping", "kind": "water", "priority_rank": 3, "weight": 0.75,
+      "unit": "residents", "unit_singular": "resident",
+      "inputs": [
+        {"id": "pumping_mw", "label": "BMC water pumping stations, combined demand (MW)", "value": 50, "kind": "measured", "source": "midday_water"},
+        {"id": "supply_mld", "label": "Water supplied per day (million litres)", "value": 4000, "kind": "measured", "source": "mcgm_hydraulic"},
+        {"id": "critical_share", "label": "Pumping needed to keep mains pressurised in supply slots", "value": 0.50, "kind": "assumption"},
+        {"id": "backup_hours", "label": "Service-reservoir storage, hours of full pumping", "value": 4, "kind": "assumption"},
+        {"id": "backup_cover", "label": "Reservoirs can stand in for this share of critical pumping", "value": 1.0, "kind": "assumption"}
+      ],
+      "reserve_label": "Reservoir storage", "reserve_initial_frac": 0.85,
+      "harm": {"soft": 0.05, "critical": 0.4, "kind": "assumption", "note": "harm per resident-hour: 0.05 with low pressure, 0.4 with no water"},
+      "escalation": 0.08
+    },
+    {
+      "id": "emergency", "name": "Fire and police", "kind": "emergency", "priority_rank": 2, "weight": 0.9,
+      "unit": "stations", "unit_singular": "station",
+      "inputs": [
+        {"id": "fire_stations", "label": "Fire stations", "value": 34, "kind": "measured", "source": "wiki_fire"},
+        {"id": "police_stations", "label": "Police stations", "value": 94, "kind": "measured", "source": "wiki_police"},
+        {"id": "kw_fire", "label": "Load per fire station (kW)", "value": 40, "kind": "assumption"},
+        {"id": "kw_police", "label": "Load per police station (kW)", "value": 30, "kind": "assumption"},
+        {"id": "critical_share", "label": "Share needed for dispatch, radio and lighting", "value": 0.70, "kind": "assumption"},
+        {"id": "backup_hours", "label": "Backup (UPS + generator), hours at critical load", "value": 8, "kind": "assumption"},
+        {"id": "backup_cover", "label": "Backup sized for this share of critical load", "value": 1.0, "kind": "assumption"}
+      ],
+      "reserve_label": "Station backup", "reserve_initial_frac": 0.8,
+      "harm": {"soft": 50, "critical": 2000, "kind": "assumption", "note": "harm per station-hour: each station covers roughly 100,000 residents"},
+      "escalation": 0.10
+    },
+    {
+      "id": "telecom", "name": "Mobile network", "kind": "telecom", "priority_rank": 4, "weight": 0.6,
+      "unit": "residents", "unit_singular": "resident",
+      "inputs": [
+        {"id": "towers", "label": "Mobile tower sites (BMC count; lower bound, the network has grown since)", "value": 3705, "kind": "measured", "source": "towers_mumbai"},
+        {"id": "kw_tower", "label": "Power per tower site (kW, TRAI estimate 3–4 kW)", "value": 4.0, "kind": "measured", "source": "trai_green"},
+        {"id": "critical_share", "label": "Share that keeps basic coverage (capacity layers off)", "value": 0.60, "kind": "assumption"},
+        {"id": "backup_hours", "label": "Tower battery backup, hours at critical load", "value": 4, "kind": "assumption"},
+        {"id": "backup_cover", "label": "Batteries sized for this share of critical load", "value": 1.0, "kind": "assumption"}
+      ],
+      "reserve_label": "Tower batteries", "reserve_initial_frac": 0.9,
+      "harm": {"soft": 0.03, "critical": 0.25, "kind": "assumption", "note": "harm per resident-hour: 0.03 congested, 0.25 no signal"},
+      "escalation": 0.08
+    },
+    {
+      "id": "homes", "name": "Homes and businesses", "kind": "homes", "priority_rank": 5, "weight": 0.3,
+      "unit": "households", "unit_singular": "household",
+      "inputs": [
+        {"id": "critical_share", "label": "Essential share (lifts, refrigeration, building water pumps)", "value": 0.15, "kind": "assumption"}
+      ],
+      "residual": true,
+      "reserve_label": "No backup", "reserve_initial_frac": 0.0,
+      "harm": {"soft": 1.0, "critical": 1.5, "kind": "assumption", "note": "harm per household-hour without power: the unit everything else is measured against"},
+      "escalation": 0.05
+    }
+  ],
+
+  "dependencies": [
+    {"source": "telecom", "target": "emergency", "impact": 0.35, "label": "112 calls and dispatch radio go down"},
+    {"source": "water", "target": "hospital", "impact": 0.25, "label": "No water pressure for sterilisation, dialysis and cooling"},
+    {"source": "telecom", "target": "hospital", "impact": 0.10, "label": "Ambulance coordination lost"}
+  ],
+
+  "facilities": [
+    {"name": "KEM Hospital, Parel", "kind": "hospital", "lat": 19.0024, "lon": 72.8417, "note": "2,250 beds"},
+    {"name": "Sion Hospital (LTMG)", "kind": "hospital", "lat": 19.0346, "lon": 72.8601},
+    {"name": "Cooper Hospital, Juhu", "kind": "hospital", "lat": 19.1074, "lon": 72.8370},
+    {"name": "Bhandup water treatment complex", "kind": "water", "lat": 19.1551, "lon": 72.9362},
+    {"name": "Tata Power Trombay station", "kind": "plant", "lat": 19.0012, "lon": 72.8993, "note": "724 MW generated at the 2023 peak"},
+    {"name": "Colaba observatory (IMD)", "kind": "weather", "lat": 18.9067, "lon": 72.8147},
+    {"name": "Santacruz observatory (IMD)", "kind": "weather", "lat": 19.0887, "lon": 72.8679},
+    {"name": "BMC disaster control room", "kind": "emergency", "lat": 18.9402, "lon": 72.8347}
+  ],
+
+  "disasters": [
+    {
+      "id": "grid_2020", "order": 1, "kind": "replay",
+      "name": "Grid islanding failure",
+      "date": "Monday 12 October 2020",
+      "summary": "Two 400 kV lines feeding Mumbai tripped within seven minutes. The city's islanding scheme could not hold a 1,000 MW drop, Trombay and Uran units tripped, and 2,600 MW of load was lost, 2,200 MW of it in Mumbai. Only Adani's Dahanu-fed island (about 400 MW) stayed up.",
+      "demand": {"anchor_hour": 10, "anchor_mw": 2800, "source": "powerline_2020", "note": "Demand at the moment of islanding was over 2,800 MW."},
+      "loss": {"mw": 2200, "onset_hour": 10.0, "envelope": [[10.0, 1.0], [12.0, 1.0], [14.0, 0.15], [25.0, 0.0]], "source": "powerline_2020",
+               "note": "Loss and onset are measured. Restoration began at noon and most areas were back after about two hours, the last after up to 15 hours; the 85%-by-14:00 shape is our reading of those reports."},
+      "affected": ["island_city", "western_suburbs", "eastern_suburbs"],
+      "timeline": [
+        {"hour": 9.967, "text": "400 kV Kalwa–Padghe line 2 trips on an R-phase fault", "source": "posoco_2020"},
+        {"hour": 10.0, "text": "400 kV Kalwa–Kharghar line (carrying 900 MW) trips: conductor snap", "source": "posoco_2020"},
+        {"hour": 10.083, "text": "Kharghar transformers trip; islanding fails; 2,600 MW of load lost", "source": "posoco_2020"},
+        {"hour": 10.917, "text": "Harbour line rail power restored", "source": "quint_2020"},
+        {"hour": 12.0, "text": "Tata Power begins progressive restoration", "source": "powerline_2020"},
+        {"hour": 12.433, "text": "Central main line rail power restored", "source": "quint_2020"}
+      ],
+      "record": [
+        {"label": "Residents affected", "value": "18.4 million", "source": "powerline_2020"},
+        {"label": "Load lost", "value": "2,600 MW (2,200 MW in Mumbai)", "source": "posoco_2020"},
+        {"label": "Outage length", "value": "2 to 15 hours", "source": "powerline_2020"},
+        {"label": "Hospitals", "value": "COVID hospitals kept running on backup", "source": "powerline_2020"}
+      ]
+    },
+    {
+      "id": "deluge_2005", "order": 2, "kind": "analog",
+      "name": "Monsoon deluge",
+      "date": "Tuesday 26 July 2005, replayed on today's grid",
+      "summary": "944 mm of rain fell on Santacruz in 24 hours, the wettest day on record. Local trains stopped by 14:30. Reliance Energy, then the suburban licensee, shut feeders on a state safety directive, switching off over 150 substations, and the suburbs stayed dark until the water receded. We apply that pattern to today's demand: the suburban licensee's share (Adani, 2,070 of 4,041 MW) is switched off from the evening.",
+      "demand": {"peak_mw": 3944, "source": "sldc_oct2024", "note": "No published July demand curve: we use the October 2024 peak day as a typical non-summer day."},
+      "loss": {"share": 0.512, "onset_hour": 19.0, "envelope": [[19.0, 1.0], [24.0, 1.0]], "source": "bs_2005",
+               "note": "Share = 2,070 ÷ 4,041 MW (Adani's part of city demand). The shutdown came 'from the evening'; 19:00 is our reading."},
+      "affected": ["western_suburbs", "eastern_suburbs"],
+      "timeline": [
+        {"hour": 14.0, "text": "Severe storm and deluge hit the city", "source": "wiki_2005"},
+        {"hour": 14.5, "text": "Local trains stop on waterlogged tracks", "source": "wiki_2005"},
+        {"hour": 19.0, "text": "Suburban feeders shut down for public safety", "source": "bs_2005"},
+        {"hour": 20.0, "text": "644 mm has fallen since 08:00", "source": "wiki_2005"}
+      ],
+      "record": [
+        {"label": "Rain in 24 hours", "value": "944 mm (Santacruz)", "source": "wiki_2005"},
+        {"label": "Substations switched off", "value": "Over 150", "source": "bs_2005"},
+        {"label": "Phone users cut off", "value": "5 million mobile and 2.3 million landline users, over 4 hours", "source": "wiki_2005"},
+        {"label": "Deaths (Maharashtra)", "value": "About 1,094", "source": "wiki_2005"}
+      ]
+    },
+    {
+      "id": "tauktae_2021", "order": 3, "kind": "analog",
+      "name": "Cyclone Tauktae",
+      "date": "Monday 17 May 2021",
+      "summary": "An extremely severe cyclone passed offshore. Colaba recorded 102 km/h winds by 11:00 and Mumbai's highest gust on record, 114 km/h, around 14:00. Falling trees tripped Adani feeders, 2,426 streetlights failed and waterlogged areas were switched off as a precaution. We found no published figure for megawatts lost, so the size of the loss here is our assumption: use the intensity slider to explore it.",
+      "demand": {"peak_mw": 3944, "source": "sldc_oct2024", "note": "Typical-day curve (October 2024 peak day)."},
+      "loss": {"share": 0.12, "onset_hour": 11.0, "envelope": [[11.0, 0.5], [14.0, 1.0], [17.0, 1.0], [21.0, 0.2], [24.0, 0.0]], "kind": "assumption",
+               "note": "ASSUMPTION: 12% of demand lost at the peak of the storm (14:00–17:00), ramping in from 11:00 and mostly restored by 21:00."},
+      "affected": ["island_city", "western_suburbs", "eastern_suburbs"],
+      "timeline": [
+        {"hour": 11.0, "text": "Colaba records 102 km/h winds", "source": "bs_tauktae"},
+        {"hour": 14.0, "text": "114 km/h gust: highest ever recorded in Mumbai", "source": "dtnext_tauktae"},
+        {"hour": 15.0, "text": "Trees fall on cables; Adani feeders trip; waterlogged areas switched off", "source": "fpj_tauktae"}
+      ],
+      "record": [
+        {"label": "Peak gust", "value": "114 km/h (record for Mumbai)", "source": "dtnext_tauktae"},
+        {"label": "Streetlights failed", "value": "2,426", "source": "fpj_streetlights"},
+        {"label": "Power lost (MW)", "value": "No published figure found", "source": "fpj_tauktae"}
+      ]
+    },
+    {
+      "id": "forecast_peak", "order": 4, "kind": "forecast",
+      "name": "Forecast: 2020 failure at the record peak",
+      "date": "What if 12 October 2020 had happened at 15:30 on 9 June 2023?",
+      "summary": "A forward-looking stress test built only from recorded numbers: the same 2,200 MW loss and the same restoration pace as 2020, but striking at the city's record 4,129 MW peak in the afternoon heat. Nothing like it has happened yet; this is the scenario planners should prepare for.",
+      "demand": {"anchor_hour": 15.5, "anchor_mw": 4129, "source": "fpj_peak_2023", "note": "Record peak, 9 June 2023, 15:30–15:45."},
+      "loss": {"mw": 2200, "onset_hour": 15.5, "envelope": [[15.5, 1.0], [17.5, 1.0], [19.5, 0.15], [30.5, 0.0]], "source": "powerline_2020",
+               "note": "2020's measured loss and restoration timing, shifted to start at the 2023 peak."},
+      "affected": ["island_city", "western_suburbs", "eastern_suburbs"],
+      "timeline": [
+        {"hour": 15.5, "text": "Record afternoon demand: 4,129 MW", "source": "fpj_peak_2023"},
+        {"hour": 15.5, "text": "Assumed: the 2020 trip sequence repeats; 2,200 MW lost", "source": "posoco_2020"},
+        {"hour": 17.5, "text": "Restoration begins (2020 pace)", "source": "powerline_2020"}
+      ],
+      "record": [
+        {"label": "Demand at onset", "value": "4,129 MW (record)", "source": "fpj_peak_2023"},
+        {"label": "Load lost", "value": "2,200 MW (as in 2020)", "source": "posoco_2020"},
+        {"label": "Heat", "value": "36.7 °C at Santacruz", "source": "fpj_peak_2023"}
+      ]
+    }
+  ],
+
+  "forecast": {
+    "members": 24,
+    "loss_spread": 0.15,
+    "restore_spread": 0.30,
+    "kind": "assumption",
+    "note": "Each forecast runs 24 versions of the day. Each version draws the loss size within ±15% and the restoration time within ±30% of the recorded values, plus its own supply noise. We report the middle (median) outcome and the 10th–90th percentile range."
+  },
+
+  "sources": {
+    "census_mcgm": {"title": "Census 2011: ward-wise population, households and slum population", "publisher": "Municipal Corporation of Greater Mumbai, Public Health Department", "url": "https://portal.mcgm.gov.in/irj/go/km/docs/documents/MCGM%20Department%20List/Public%20Health%20Department/Docs/Census%20FAQ%20%26%20Answer.pdf"},
+    "wiki_mumbai": {"title": "Mumbai: coordinates and area", "publisher": "Wikipedia", "url": "https://en.wikipedia.org/wiki/Mumbai"},
+    "wards_geo": {"title": "BMC ward boundaries (GeoJSON)", "publisher": "DataMeet, Municipal_Spatial_Data", "url": "https://github.com/datameet/Municipal_Spatial_Data/tree/master/Mumbai"},
+    "fpj_peak_2023": {"title": "Mumbai power consumption at all-time high (4,129 MW, 9 June 2023)", "publisher": "Free Press Journal", "url": "https://www.freepressjournal.in/mumbai/mumbai-news-power-consumption-at-all-time-high"},
+    "mumbailive_split": {"title": "Power demand skyrockets beyond 4,000 MW due to heatwave", "publisher": "Mumbai Live", "url": "https://www.mumbailive.com/en/civic/power-demand-skyrockets-beyond-4000-mw-due-to-heatwave-in-mumbai-83725"},
+    "sldc_oct2024": {"title": "Monthly report, October 2024 (Mumbai system max and min demand)", "publisher": "Maharashtra State Load Despatch Centre", "url": "https://mahasldc.in/wp-content/reports/mr6_102024.pdf", "caveat": "Read through a search index; the PDF could not be fetched directly, so treat the min/max as provisional."},
+    "posoco_2020": {"title": "POSOCO flash report on the Mumbai power failure", "publisher": "Free Press Journal, 12 Oct 2020", "url": "https://www.freepressjournal.in/mumbai/mumbai-power-outage-posoco-releases-flash-report-on-power-failure"},
+    "powerline_2020": {"title": "Tripping Up: emerging concerns in the wake of the Mumbai power outage", "publisher": "Power Line, Nov 2020", "url": "https://powerline.net.in/2020/11/04/tripping-up/"},
+    "quint_2020": {"title": "Massive power outage across Mumbai after incoming supply failure", "publisher": "The Quint", "url": "https://www.thequint.com/amp/story/news/india/massive-power-outage-across-mumbai-after-incoming-electric-supply-failure"},
+    "beds_qoc": {"title": "Mumbai's healthcare system shows the public, not the private, matters (BMC bed counts)", "publisher": "Question of Cities", "url": "https://questionofcities.org/why-mumbais-healthcare-shows-the-public-not-private-matters/"},
+    "ncdc_hospitals": {"title": "Towards Climate Smart Hospitals: National Hospital Energy Consumption Survey", "publisher": "NCDC, Ministry of Health and Family Welfare", "url": "https://ncdc.mohfw.gov.in/wp-content/uploads/2024/06/Towards-Climate-Smart-Hospitals_National-Hospital-Energy-Consumption-Survey.pdf"},
+    "ganga_hospital": {"title": "Energy award submission, Ganga Medical Centre, Coimbatore (kWh per bed)", "publisher": "CII Green Business Centre", "url": "https://www.energy.greenbusinesscentre.com/energyawards/enepresent21/Buildings%20_347_05_Ganga_Medical__Coimbatore_0.pdf"},
+    "midday_water": {"title": "BMC ties up with Tata to shift to green energy for water pumping (pumping stations use over 50 MW)", "publisher": "Mid-day, 14 Mar 2024", "url": "https://www.mid-day.com/mumbai/mumbai-news/article/mumbai-bmc-ties-up-with-tata-to-shift-to-green-energy-for-water-pumping-23339809"},
+    "mcgm_hydraulic": {"title": "Hydraulic Engineer's Department (about 4,000 MLD supplied)", "publisher": "MCGM", "url": "https://crmapp.mcgm.gov.in/irj/portal/anonymous/qlhydrlc"},
+    "towers_mumbai": {"title": "Mumbai has 49% illegal telecom towers (3,705 towers counted)", "publisher": "TelecomLead", "url": "https://telecomlead.com/telecom-equipment/mumbai-has-49-illegal-telecom-towers-80447-29678"},
+    "trai_green": {"title": "Recommendations on Green Telecom (3–4 kW per tower)", "publisher": "TRAI, 12 Apr 2011", "url": "https://www.trai.gov.in/sites/default/files/2024-09/Green_Telecom-12.04.2011.pdf"},
+    "wiki_fire": {"title": "Mumbai Fire Brigade (34 fire stations)", "publisher": "Wikipedia", "url": "https://en.wikipedia.org/wiki/Mumbai_Fire_Brigade"},
+    "wiki_police": {"title": "Mumbai Police (94 police stations)", "publisher": "Wikipedia", "url": "https://en.wikipedia.org/wiki/Mumbai_Police"},
+    "wiki_2005": {"title": "2005 Maharashtra floods", "publisher": "Wikipedia", "url": "https://en.wikipedia.org/wiki/2005_Maharashtra_floods"},
+    "bs_2005": {"title": "Maharashtra raps Reliance for poor power supply (feeders shut on state directive; over 150 substations off)", "publisher": "Business Standard, Aug 2005", "url": "https://www.business-standard.com/article/economy-policy/maharashtra-raps-reliance-for-poor-power-supply-105080201073_1.html"},
+    "bs_tauktae": {"title": "Heavy showers, strong winds lash Mumbai as Cyclone Tauktae passes coast", "publisher": "Business Standard, 17 May 2021", "url": "https://www.business-standard.com/article/current-affairs/heavy-showers-strong-winds-lash-mumbai-as-cyclone-tauktae-passes-coast-121051701508_1.html"},
+    "dtnext_tauktae": {"title": "Cyclone Tauktae: strong winds at 114 kmph strike Mumbai", "publisher": "DT Next, 17 May 2021", "url": "https://www.dtnext.in/national/2021/05/17/cyclone-tauktae-strong-winds-at-114-kmph-strike-mumbai"},
+    "fpj_tauktae": {"title": "Mumbai power outage: discoms struggle as complaints pour in", "publisher": "Free Press Journal, May 2021", "url": "https://www.freepressjournal.in/mumbai/mumbai-power-outage-hits-city-discoms-struggle-as-complaints-pour-in"},
+    "fpj_streetlights": {"title": "Cyclone Tauktae: 2,426 streetlights left defunct", "publisher": "Free Press Journal", "url": "https://www.freepressjournal.in/mumbai/cyclone-tauktae-2426-streetlights-left-defunct"}
+  }
+}

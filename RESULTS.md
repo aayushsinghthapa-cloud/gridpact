@@ -8,10 +8,10 @@ Every number below comes from a real simulator run. Seeds 1–10 for the multi-s
 
 | Scenario | Agents | GridPact damage vs strict priority | vs proportional | vs equal split | GridPact lowest damage | Capacity violations (all policies, all seeds) |
 |---|---:|---:|---:|---:|---:|---:|
-| Cyclone landfall | 4 | -76.0% | -15.8% | -66.3% | 10/10 seeds | 0 |
-| Cascading substation failures | 4 | -73.3% | -3.8% | -64.0% | 10/10 seeds | 0 |
-| Long heatwave brownout | 4 | -70.1% | -8.2% | -74.4% | 10/10 seeds | 0 |
-| Metro stress test (24 utilities) | 24 | -73.7% | -8.9% | -73.8% | 10/10 seeds | 0 |
+| Cyclone landfall | 4 | -75.6% | -14.8% | -65.9% | 10/10 seeds | 0 |
+| Cascading substation failures | 4 | -72.9% | -2.3% | -63.5% | 10/10 seeds | 0 |
+| Long heatwave brownout | 4 | -69.9% | -7.4% | -74.2% | 10/10 seeds | 0 |
+| Metro stress test (24 utilities) | 24 | -72.7% | -5.2% | -72.8% | 10/10 seeds | 0 |
 
 Damage change is the mean over seeds of (GridPact − baseline) / baseline. Negative = GridPact did less damage.
 
@@ -23,31 +23,31 @@ Damage change is the mean over seeds of (GridPact − baseline) / baseline. Nega
 
 | Metric (mean ± sd over seeds) | GridPact (negotiation) | Strict priority | Proportional to demand | Equal split |
 |---|---:|---:|---:|---:|
-| Total damage | 11,593 ± 183 | 48,216 ± 746 | 13,782 ± 399 | 34,440 ± 924 |
+| Total damage | 11,741 ± 202 | 48,216 ± 746 | 13,782 ± 399 | 34,440 ± 924 |
 | Failure events | 0.0 | 7.3 ± 3.0 | 1.7 ± 0.8 | 3.6 ± 1.4 |
 | Longest single outage (h) | 0.00 | 14.70 ± 0.10 | 2.77 ± 0.17 | 8.00 ± 0.57 |
 | Critical energy unserved (kWh) | 0 | 2,646 ± 34 | 78 ± 8 | 858 ± 27 |
-| Jain's fairness index | 0.9980 ± 0.0002 | 0.9077 ± 0.0017 | 0.9993 ± 0.0000 | 0.9815 ± 0.0006 |
+| Jain's fairness index | 0.9992 ± 0.0000 | 0.9077 ± 0.0017 | 0.9993 ± 0.0000 | 0.9815 ± 0.0006 |
 | Capacity violations | **0** total | **0** total | **0** total | **0** total |
-| Rounds per contested step (mean) | 3.94 ± 0.04 | n/a | n/a | n/a |
-| Rounds per contested step (max) | 8 ± 0 | n/a | n/a | n/a |
+| Rounds per contested step (mean) | 3.64 ± 0.04 | n/a | n/a | n/a |
+| Rounds per contested step (max) | 7 ± 0 | n/a | n/a | n/a |
 | Fallback steps | 0.0 | 0.0 | 0.0 | 0.0 |
-| Compute time per step (ms, mean) | 0.129 | 0.069 | 0.064 | 0.070 |
+| Compute time per step (ms, mean) | 0.125 | 0.066 | 0.063 | 0.066 |
 
 ### Seed 41 (what the dashboard shows)
 
 | Metric | GridPact (negotiation) | Strict priority | Proportional to demand | Equal split |
 |---|---:|---:|---:|---:|
-| Total damage | 11,922 | 49,977 | 14,361 | 35,126 |
+| Total damage | 11,896 | 49,977 | 14,361 | 35,126 |
 | Failure events | 0.0 | 6.0 | 2.0 | 4.0 |
 | Longest single outage (h) | 0.00 | 14.75 | 3.25 | 7.50 |
 | Critical energy unserved (kWh) | 0 | 2,697 | 96 | 882 |
-| Jain's fairness index | 0.9979 | 0.9082 | 0.9993 | 0.9810 |
+| Jain's fairness index | 0.9991 | 0.9082 | 0.9993 | 0.9810 |
 | Capacity violations | 0 | 0 | 0 | 0 |
-| Rounds per contested step (mean) | 3.95 | n/a | n/a | n/a |
-| Rounds per contested step (max) | 8 | n/a | n/a | n/a |
+| Rounds per contested step (mean) | 3.63 | n/a | n/a | n/a |
+| Rounds per contested step (max) | 7 | n/a | n/a | n/a |
 | Fallback steps | 0.0 | 0.0 | 0.0 | 0.0 |
-| Compute time per step (ms, mean) | 0.138 | 0.081 | 0.075 | 0.070 |
+| Compute time per step (ms, mean) | 0.129 | 0.067 | 0.063 | 0.066 |
 
 Longest outage per utility, hours (failure events):
 
@@ -66,31 +66,31 @@ Longest outage per utility, hours (failure events):
 
 | Metric (mean ± sd over seeds) | GridPact (negotiation) | Strict priority | Proportional to demand | Equal split |
 |---|---:|---:|---:|---:|
-| Total damage | 11,502 ± 240 | 43,129 ± 843 | 11,951 ± 218 | 31,961 ± 815 |
+| Total damage | 11,676 ± 209 | 43,129 ± 843 | 11,951 ± 218 | 31,961 ± 815 |
 | Failure events | 0.0 | 3.7 ± 0.6 | 0.0 | 2.5 ± 0.9 |
 | Longest single outage (h) | 0.00 | 17.70 ± 0.29 | 0.00 | 7.80 ± 0.38 |
 | Critical energy unserved (kWh) | 0 | 2,443 ± 33 | 0 | 775 ± 27 |
-| Jain's fairness index | 0.9978 ± 0.0001 | 0.8482 ± 0.0052 | 0.9992 ± 0.0001 | 0.9783 ± 0.0006 |
+| Jain's fairness index | 0.9993 ± 0.0001 | 0.8482 ± 0.0052 | 0.9992 ± 0.0001 | 0.9783 ± 0.0006 |
 | Capacity violations | **0** total | **0** total | **0** total | **0** total |
-| Rounds per contested step (mean) | 3.24 ± 0.02 | n/a | n/a | n/a |
-| Rounds per contested step (max) | 7 ± 0 | n/a | n/a | n/a |
+| Rounds per contested step (mean) | 2.99 ± 0.04 | n/a | n/a | n/a |
+| Rounds per contested step (max) | 6 ± 1 | n/a | n/a | n/a |
 | Fallback steps | 0.0 | 0.0 | 0.0 | 0.0 |
-| Compute time per step (ms, mean) | 0.132 | 0.069 | 0.066 | 0.071 |
+| Compute time per step (ms, mean) | 0.123 | 0.067 | 0.063 | 0.066 |
 
 ### Seed 41 (what the dashboard shows)
 
 | Metric | GridPact (negotiation) | Strict priority | Proportional to demand | Equal split |
 |---|---:|---:|---:|---:|
-| Total damage | 11,441 | 42,817 | 11,948 | 32,053 |
+| Total damage | 11,700 | 42,817 | 11,948 | 32,053 |
 | Failure events | 0.0 | 6.0 | 0.0 | 4.0 |
 | Longest single outage (h) | 0.00 | 17.00 | 0.00 | 7.50 |
 | Critical energy unserved (kWh) | 0 | 2,398 | 0 | 780 |
-| Jain's fairness index | 0.9976 | 0.8573 | 0.9992 | 0.9785 |
+| Jain's fairness index | 0.9992 | 0.8573 | 0.9992 | 0.9785 |
 | Capacity violations | 0 | 0 | 0 | 0 |
-| Rounds per contested step (mean) | 3.23 | n/a | n/a | n/a |
-| Rounds per contested step (max) | 7 | n/a | n/a | n/a |
+| Rounds per contested step (mean) | 3.01 | n/a | n/a | n/a |
+| Rounds per contested step (max) | 6 | n/a | n/a | n/a |
 | Fallback steps | 0.0 | 0.0 | 0.0 | 0.0 |
-| Compute time per step (ms, mean) | 0.148 | 0.072 | 0.074 | 0.087 |
+| Compute time per step (ms, mean) | 0.122 | 0.065 | 0.063 | 0.066 |
 
 Longest outage per utility, hours (failure events):
 
@@ -109,31 +109,31 @@ Longest outage per utility, hours (failure events):
 
 | Metric (mean ± sd over seeds) | GridPact (negotiation) | Strict priority | Proportional to demand | Equal split |
 |---|---:|---:|---:|---:|
-| Total damage | 34,294 ± 143 | 114,858 ± 799 | 37,350 ± 572 | 133,955 ± 2,367 |
+| Total damage | 34,576 ± 152 | 114,858 ± 799 | 37,350 ± 572 | 133,955 ± 2,367 |
 | Failure events | 0.0 | 6.3 ± 1.4 | 1.0 | 7.8 ± 1.7 |
 | Longest single outage (h) | 0.00 | 32.50 | 3.90 ± 0.67 | 25.38 ± 0.12 |
 | Critical energy unserved (kWh) | 0 | 6,269 ± 56 | 95 ± 18 | 3,998 ± 92 |
-| Jain's fairness index | 0.9948 ± 0.0001 | 0.7259 ± 0.0018 | 0.9989 ± 0.0000 | 0.9116 ± 0.0015 |
+| Jain's fairness index | 0.9985 ± 0.0001 | 0.7259 ± 0.0018 | 0.9989 ± 0.0000 | 0.9116 ± 0.0015 |
 | Capacity violations | **0** total | **0** total | **0** total | **0** total |
-| Rounds per contested step (mean) | 4.39 ± 0.04 | n/a | n/a | n/a |
-| Rounds per contested step (max) | 7 | n/a | n/a | n/a |
+| Rounds per contested step (mean) | 3.97 ± 0.03 | n/a | n/a | n/a |
+| Rounds per contested step (max) | 7 ± 0 | n/a | n/a | n/a |
 | Fallback steps | 0.0 | 0.0 | 0.0 | 0.0 |
-| Compute time per step (ms, mean) | 0.149 | 0.073 | 0.070 | 0.076 |
+| Compute time per step (ms, mean) | 0.136 | 0.067 | 0.064 | 0.067 |
 
 ### Seed 41 (what the dashboard shows)
 
 | Metric | GridPact (negotiation) | Strict priority | Proportional to demand | Equal split |
 |---|---:|---:|---:|---:|
-| Total damage | 34,268 | 115,098 | 37,036 | 135,691 |
+| Total damage | 34,574 | 115,098 | 37,036 | 135,691 |
 | Failure events | 0.0 | 6.0 | 1.0 | 10.0 |
 | Longest single outage (h) | 0.00 | 32.50 | 4.25 | 25.50 |
 | Critical energy unserved (kWh) | 0 | 6,267 | 85 | 4,064 |
-| Jain's fairness index | 0.9948 | 0.7278 | 0.9989 | 0.9106 |
+| Jain's fairness index | 0.9984 | 0.7278 | 0.9989 | 0.9106 |
 | Capacity violations | 0 | 0 | 0 | 0 |
-| Rounds per contested step (mean) | 4.38 | n/a | n/a | n/a |
+| Rounds per contested step (mean) | 3.93 | n/a | n/a | n/a |
 | Rounds per contested step (max) | 7 | n/a | n/a | n/a |
 | Fallback steps | 0.0 | 0.0 | 0.0 | 0.0 |
-| Compute time per step (ms, mean) | 0.154 | 0.072 | 0.068 | 0.079 |
+| Compute time per step (ms, mean) | 0.136 | 0.066 | 0.064 | 0.067 |
 
 Longest outage per utility, hours (failure events):
 
@@ -152,31 +152,31 @@ Longest outage per utility, hours (failure events):
 
 | Metric (mean ± sd over seeds) | GridPact (negotiation) | Strict priority | Proportional to demand | Equal split |
 |---|---:|---:|---:|---:|
-| Total damage | 52,663 ± 1,116 | 200,461 ± 3,367 | 57,792 ± 1,233 | 201,520 ± 9,597 |
+| Total damage | 54,800 ± 1,166 | 200,461 ± 3,367 | 57,792 ± 1,233 | 201,520 ± 9,597 |
 | Failure events | 0.0 | 51.0 ± 6.7 | 2.4 ± 0.8 | 18.5 ± 3.1 |
 | Longest single outage (h) | 0.00 | 19.82 ± 0.16 | 1.80 ± 0.42 | 16.62 ± 0.42 |
 | Critical energy unserved (kWh) | 0 | 15,017 ± 217 | 48 ± 12 | 5,932 ± 333 |
-| Jain's fairness index | 0.9954 ± 0.0002 | 0.7729 ± 0.0065 | 0.9994 ± 0.0000 | 0.9699 ± 0.0014 |
+| Jain's fairness index | 0.9982 ± 0.0001 | 0.7729 ± 0.0065 | 0.9994 ± 0.0000 | 0.9699 ± 0.0014 |
 | Capacity violations | **0** total | **0** total | **0** total | **0** total |
-| Rounds per contested step (mean) | 4.10 ± 0.06 | n/a | n/a | n/a |
-| Rounds per contested step (max) | 9 ± 0 | n/a | n/a | n/a |
+| Rounds per contested step (mean) | 3.49 ± 0.05 | n/a | n/a | n/a |
+| Rounds per contested step (max) | 7 | n/a | n/a | n/a |
 | Fallback steps | 0.0 | 0.0 | 0.0 | 0.0 |
-| Compute time per step (ms, mean) | 1.027 | 0.322 | 0.381 | 0.486 |
+| Compute time per step (ms, mean) | 0.813 | 0.282 | 0.271 | 0.283 |
 
 ### Seed 41 (what the dashboard shows)
 
 | Metric | GridPact (negotiation) | Strict priority | Proportional to demand | Equal split |
 |---|---:|---:|---:|---:|
-| Total damage | 52,972 | 200,462 | 58,279 | 206,388 |
+| Total damage | 55,311 | 200,462 | 58,279 | 206,388 |
 | Failure events | 0.0 | 57.0 | 4.0 | 24.0 |
 | Longest single outage (h) | 0.00 | 19.75 | 2.00 | 17.50 |
 | Critical energy unserved (kWh) | 0 | 15,017 | 61 | 6,169 |
-| Jain's fairness index | 0.9955 | 0.7770 | 0.9994 | 0.9694 |
+| Jain's fairness index | 0.9982 | 0.7770 | 0.9994 | 0.9694 |
 | Capacity violations | 0 | 0 | 0 | 0 |
-| Rounds per contested step (mean) | 4.15 | n/a | n/a | n/a |
-| Rounds per contested step (max) | 9 | n/a | n/a | n/a |
+| Rounds per contested step (mean) | 3.50 | n/a | n/a | n/a |
+| Rounds per contested step (max) | 7 | n/a | n/a | n/a |
 | Fallback steps | 0.0 | 0.0 | 0.0 | 0.0 |
-| Compute time per step (ms, mean) | 0.828 | 0.316 | 0.277 | 0.297 |
+| Compute time per step (ms, mean) | 0.811 | 0.277 | 0.268 | 0.282 |
 
 Longest outage per utility, hours (failure events):
 
@@ -198,10 +198,12 @@ One agent is switched to the `greedy` strategy: it inflates its urgency bid ×5 
 
 | Liar | Liar's own damage (honest → lying) | Everyone else's damage | Total damage | Failure events while lying | Capacity violations |
 |---|---:|---:|---:|---:|---:|
-| Telecom | 1,267 → 59 | 10,655 → 17,395 (+63%) | 11,922 → 17,454 (+46%) | 2 | 0 |
-| Hospital | 4,423 → 765 | 7,499 → 11,331 (+51%) | 11,922 → 12,096 (+1%) | 0 | 0 |
+| Telecom | 1,037 → 97 | 10,859 → 14,167 (+30%) | 11,896 → 14,263 (+20%) | 2 | 0 |
+| Hospital | 4,935 → 1,270 | 6,961 → 6,033 (-13%) | 11,896 → 7,303 (-39%) | 0 | 0 |
 
-The validator still guarantees physical safety (zero violations): lying cannot break the grid. But lying is not free for everyone else, which is why this is listed under limitations.
+A lying Telecom gains at everyone else's expense (+30% for the others). A lying Hospital *lowered* everyone else's damage too (-13%), and total damage by 39%. That is not a case for lying. It shows the honest negotiation is **not optimal** here: a liar that never concedes forces deadlocks, the fallback then serves agents in order of their bids, and that ordering suited this storm better than the negotiated split. We report it as an open finding (see Limitations).
+
+The validator still guarantees physical safety (zero violations): lying cannot break the grid.
 
 ## Scalability
 
@@ -209,11 +211,11 @@ The 24-utility metro replicated k times (supply scaled by k), seed 41, full 24 h
 
 | Agents | GridPact ms/step (mean) | ms/step (p95) | Rounds/contested step (mean / max) | Fallback steps | Capacity violations | Failure events |
 |---:|---:|---:|---:|---:|---:|---:|
-| 4 | 0.13 | 0.17 | 3.95 / 8 | 0 | 0 | 0 |
-| 24 | 0.77 | 0.99 | 4.08 / 8 | 0 | 0 | 0 |
-| 48 | 2.01 | 2.56 | 4.08 / 8 | 0 | 0 | 0 |
-| 96 | 12.06 | 24.74 | 4.08 / 8 | 0 | 0 | 0 |
-| 192 | 24.18 | 34.85 | 4.08 / 8 | 0 | 0 | 0 |
+| 4 | 0.12 | 0.17 | 3.63 / 7 | 0 | 0 | 0 |
+| 24 | 0.80 | 1.07 | 3.36 / 7 | 0 | 0 | 0 |
+| 48 | 2.06 | 2.80 | 3.36 / 7 | 0 | 0 | 0 |
+| 96 | 6.14 | 8.77 | 3.36 / 7 | 0 | 0 | 0 |
+| 192 | 22.01 | 30.92 | 3.36 / 7 | 0 | 0 | 0 |
 
 Each round costs O(n) per agent decision (every agent reads the public offer table), so a round is O(n²) in the worst case; the round count stays bounded by the per-phase increment rule and the cap of 16.
 
@@ -231,6 +233,10 @@ Each round costs O(n) per agent decision (every agent reads the public offer tab
   credits only from observable concessions) but does not prevent lying: the honesty experiment
   above shows a greedy agent *does* gain. Real deployment would need audited meters and
   penalties.
+- **GridPact is not optimal.** It beats every baseline here, but the honesty experiment found a
+  better allocation by accident (a non-conceding hospital lowered total damage in the cyclone),
+  and on real Mumbai data it only ties the best baseline (CITY.md). An optimal benchmark (an LP
+  with perfect information) would measure the gap; we have not built it.
 - **Reserves are kWh-equivalents.** A water tank or diesel tank is modelled as stored energy with
   a discharge and recharge rate; real pumps and generators have start-up limits and efficiencies
   we ignore.
@@ -241,4 +247,4 @@ Each round costs O(n) per agent decision (every agent reads the public offer tab
 - **The LLM narrator is optional and unevaluated.** It only paraphrases the deterministic log
   and is off by default.
 
-_Generated in 7.7 s._
+_Generated in 6.2 s._

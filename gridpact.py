@@ -4,7 +4,7 @@
     python3 gridpact.py              start the dashboard at http://127.0.0.1:8041
     python3 gridpact.py test         run every test (the hard guarantees)
     python3 gridpact.py run SCENARIO [--seed N] [--policy P]   headless run, prints metrics
-    python3 gridpact.py results      regenerate RESULTS.md from real runs
+    python3 gridpact.py results      regenerate RESULTS.md and CITY.md from real runs
     python3 gridpact.py check        pre-flight report for the demo laptop (share it with your team)
 """
 import argparse
@@ -61,6 +61,8 @@ def main(argv=None):
     elif args.cmd == "results":
         from scripts.generate_results import main as gen
         gen()
+        from scripts.generate_city_results import main as gen_city
+        gen_city()
 
 
 def preflight() -> int:
@@ -117,7 +119,21 @@ def preflight() -> int:
     except Exception as e:  # noqa: BLE001
         add("Scenarios", False, f"{type(e).__name__}: {e}")
 
-    for name in ("index.html", "app.js", "charts.js", "styles.css", "fonts/plex-sans-400.woff2"):
+    try:
+        from gridpact import city
+        for d in city.load_city("mumbai")["disasters"]:
+            r = city.run_city("mumbai", d["id"], 1.0, 41, members=2)
+            P = r["policies"]
+            viol = sum(p["violations"] for p in P.values()) + r["forecast_violations"]
+            best = min(P[p]["harm"] for p in P if p != "gridpact")
+            add(f"Mumbai {d['id']}", viol == 0,
+                f"GridPact harm {P['gridpact']['harm'] / 1e6:.2f} M household-h, "
+                f"vs best baseline {100 * (P['gridpact']['harm'] - best) / best:+.1f}%, violations {viol}")
+    except Exception as e:  # noqa: BLE001
+        add("Mumbai city data", False, f"{type(e).__name__}: {e}")
+
+    for name in ("index.html", "app.js", "charts.js", "styles.css", "city.html", "city.js", "city.css",
+                 "fonts/plex-sans-400.woff2"):
         if not os.path.exists(os.path.join("web", name)):
             add("Dashboard files", False, f"missing web/{name}")
             break

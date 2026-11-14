@@ -64,9 +64,12 @@ class Protocol(unittest.TestCase):
         self.assertTrue(validate(120_000, reqs, p).ok)
         again = GridPactPolicy().allocate(120_000, reqs, agents, states)
         self.assertEqual(p.allocations, again.allocations)
-        # the more urgent agent keeps its hard floor; the other gets the remainder
-        top = sorted(p.bids, key=lambda a: (-p.bids[a], a))[0]   # documented tie-break: id
-        self.assertEqual(p.allocations[top], reqs[top].min_w)
+        # the more urgent agent keeps its whole hard floor; the other's floor cannot fit,
+        # so it gets no partial floor, and the leftover goes to top-ups in bid order (D-18)
+        top, other = sorted(p.bids, key=lambda a: (-p.bids[a], a))   # documented tie-break: id
+        self.assertGreaterEqual(p.allocations[top], reqs[top].min_w)
+        self.assertEqual(p.allocations[top] + p.allocations[other], 120_000)
+        self.assertLessEqual(p.allocations[top], reqs[top].max_w)
 
     def test_round_cap_triggers_fallback_and_stays_safe(self):
         agents, states = world((cfg("h"), 0.9), (cfg("t"), 0.9))

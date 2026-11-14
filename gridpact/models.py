@@ -64,6 +64,10 @@ class AgentConfig:
     escalation_cap_steps: int     # escalation stops growing after this many steps
     strategy: str = "honest"      # "honest" or "greedy" (a deliberately lying agent, for tests)
     reserve_label: str = "Backup reserve"   # display only, e.g. "Diesel backup"
+    # Optional daily demand curve: (hour, multiplier) keypoints, interpolated
+    # linearly. Empty = flat load. Real city loads follow the clock (night
+    # trough, afternoon peak), so city scenarios set this; the core scenarios don't.
+    demand_profile: Tuple[Tuple[float, float], ...] = ()
 
 
 @dataclass(frozen=True)

@@ -38,7 +38,7 @@ Format for each: **Chose**, **Alternatives**, **Why**. Numbers quoted here come 
   values line up and don't jitter while the simulation runs.
 
 ### T-5. Tests: `unittest` (standard library)
-- **Chose:** 54 tests with `unittest`, run with `python3 gridpact.py test`.
+- **Chose:** 69 tests with `unittest`, run with `python3 gridpact.py test`.
 - **Alternatives:** pytest; Hypothesis for property-based testing.
 - **Why:** Same reason as T-1: nothing to install. We hand-wrote the property-style tests we
   needed, for example 3,000 random cases fuzzing the fallback, and every scenario × policy × seed
@@ -208,7 +208,7 @@ Format for each: **Chose**, **Alternatives**, **Why**. Numbers quoted here come 
 - **Alternatives:** Jain's index per step, then averaged; Jain's index on raw kW.
 - **Why:** Raw kW would call it "unfair" that a hospital uses more than a telecom tower. Service
   ratios compare like with like. We report it honestly: proportional scores slightly higher
-  (0.999 vs 0.998) because it gives everyone the same ratio, while GridPact deliberately tilts
+  (0.9993 vs 0.9992) because it gives everyone the same ratio, while GridPact deliberately tilts
   toward critical load to prevent failures.
 
 ### D-16. Dashboard design
@@ -223,3 +223,44 @@ Format for each: **Chose**, **Alternatives**, **Why**. Numbers quoted here come 
   icon and a label). The three baselines run in lockstep with the live run, so the comparison is
   visible *during* the demo, not only on the results tab. The design went through Impeccable's
   audit, a two-reviewer critique and a polish pass.
+
+### D-17. Bids carry the agent's own harm rate; concessions are a fraction of slack
+- **Found by:** running the protocol on real Mumbai numbers ([CITY.md](CITY.md)). There,
+  hospitals (37 MW), water pumping (50 MW) and the mobile network (15 MW) sit next to 3,228 MW of
+  homes and businesses. Under the original rule GridPact did **2–4× more harm than strict
+  priority** in all four disasters, with no failures and no violations: it was simply making the
+  wrong trade.
+- **Two biases:** (1) The bid ignored *how much harm a kW does*. Every core utility has the same
+  comfort-harm rate (1.0), so the bid never needed it, but on a real city a kW cut from water
+  pumping does ~10× the harm of a kW cut from homes. (2) Each agent conceded a share of the
+  excess *in absolute watts* (∝ 1/u). Next to a 3,000 MW load with a similar bid, a 37 MW
+  hospital's "share" exceeded its whole load, so it always gave up everything.
+- **Chose:** u gains the agent's own `damage_soft` (private config it already owns), and a
+  round's share becomes ∝ slack/u: a fraction of what you can give. Both use only the agent's
+  own state plus public offers, floors and bids, so the protocol stays decentralized.
+- **Alternatives:** keep the rule and report the city result as a limitation; or add only the
+  harm term (core results byte-identical, but Mumbai still +33–47% vs strict priority).
+- **Cost, measured:** core advantage vs the best baseline moved from −16/−4/−8/−9% to
+  −15/−2/−7/−5% (cyclone / cascading / heatwave / metro, 10 seeds), still 10/10 seeds and 0
+  failure events everywhere. Mumbai moved from +104…+308% to within ±0.4% of strict priority.
+- **Why that is the ceiling on Mumbai:** when the critical sectors are ~3% of load, any policy
+  that protects them first (strict priority, equal split) is close to optimal, and the remaining
+  harm is homes losing power, which no allocation can avoid. GridPact matching it while still
+  beating proportional by up to 12% is the honest result.
+
+### D-18. The deadlock fallback grants whole floors only, and voids deadlocked concessions
+- **Found by:** the Mumbai intensity sweep. At 1.25× the 2020 loss, 137 MW remained, about the
+  size of the critical services. Homes needed 424 MW to avoid failing, so the negotiation
+  deadlocked. Hospitals, water and telecom had already conceded to zero trying to make room. The
+  fallback then gave homes all the power (a partial floor, so they failed anyway) and capped
+  everyone else's top-up at their conceded-to-zero offers. GridPact came out 6.9% worse than
+  strict priority.
+- **Chose:** (1) grant a survival floor only if all of it fits; (2) after a *deadlock*, top up
+  toward each agent's original request, because concessions offered for an agreement that cannot
+  exist are void. After a *round cap* the converging offers still bound the top-up.
+- **Why it's safe:** the fallback is still constraint-safe by construction (every grant clipped
+  to [0, request.max], taken from what remains), and it is still fuzz-tested over 3,000 random cases.
+- **Effect, measured:** the fallback never ran in the core scenarios, so their results are
+  unchanged. At 1.25× on Mumbai, GridPact went from +6.9% to +0.1% vs the best baseline. The
+  lying-agent experiment (which forces deadlocks) changed, and RESULTS.md reports the new numbers.
+

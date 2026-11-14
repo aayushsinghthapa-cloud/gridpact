@@ -86,6 +86,7 @@ def _parse_agent(d: dict, where: str) -> AgentConfig:
         escalation_cap_steps=int(d.get("escalation_cap_steps", 24)),
         strategy=str(d.get("strategy", "honest")),
         reserve_label=str(d.get("reserve_label", "Backup reserve")),
+        demand_profile=tuple((float(h), float(f)) for h, f in d.get("demand_profile", ())),
     )
     w = f"{where} agent '{a.id}'"
     if not (0 < a.min_kw <= a.desired_kw):
@@ -96,6 +97,10 @@ def _parse_agent(d: dict, where: str) -> AgentConfig:
         raise ConfigError(f"{w}: reserve_initial_frac must be in [0, 1]")
     if min(a.reserve_capacity_kwh, a.max_discharge_kw, a.recharge_kw) < 0:
         raise ConfigError(f"{w}: reserve figures must be >= 0")
+    if a.demand_profile and (a.demand_profile[0][0] != 0 or any(f <= 0 for _, f in a.demand_profile)
+                             or any(a.demand_profile[i][0] >= a.demand_profile[i + 1][0]
+                                    for i in range(len(a.demand_profile) - 1))):
+        raise ConfigError(f"{w}: demand_profile must start at hour 0, increase, and stay > 0")
     if a.strategy not in ("honest", "greedy"):
         raise ConfigError(f"{w}: strategy must be 'honest' or 'greedy'")
     return a
