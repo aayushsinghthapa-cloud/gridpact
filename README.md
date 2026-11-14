@@ -73,7 +73,9 @@ Scenarios and agents are JSON in [`data/`](data/). Add a utility or a disaster b
 ### Optional LLM narration (off by default)
 
 ```bash
-pip install anthropic && export ANTHROPIC_API_KEY=...
+pip install anthropic
+export ANTHROPIC_API_KEY=...          # your key, set in your own terminal
+export GRIDPACT_LLM_MODEL=...          # a model id available on your account
 GRIDPACT_LLM=1 python3 gridpact.py
 ```
 

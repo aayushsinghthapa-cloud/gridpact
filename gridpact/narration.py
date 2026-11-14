@@ -9,14 +9,16 @@ The core system NEVER depends on this module:
   * any failure (no package, no key, no network at the venue) returns a
     plain message instead of raising.
 
-Enable:  pip install anthropic   then   GRIDPACT_LLM=1 python3 gridpact.py
-Credentials come from ANTHROPIC_API_KEY (or an `ant auth login` profile).
+Enable:  pip install anthropic, set ANTHROPIC_API_KEY and GRIDPACT_LLM_MODEL (a model id from
+your provider account), then  GRIDPACT_LLM=1 python3 gridpact.py
 """
 from __future__ import annotations
 
 import os
 
-MODEL = os.environ.get("GRIDPACT_LLM_MODEL", "")  # required when narration is on
+def _model() -> str:
+    """Model id comes from the environment; there is deliberately no built-in default."""
+    return os.environ.get("GRIDPACT_LLM_MODEL", "").strip()
 
 SYSTEM = (
     "You narrate a power-sharing negotiation between city utility agents during a disaster, "
@@ -52,6 +54,8 @@ def _facts(scenario, record: dict) -> str:
 def narrate(scenario, record: dict) -> dict:
     if not enabled():
         return {"enabled": False, "text": "Narration is off. Start with GRIDPACT_LLM=1 to enable it."}
+    if not _model():
+        return {"enabled": False, "text": "Narration needs a model id: set GRIDPACT_LLM_MODEL."}
     try:
         import anthropic  # lazy: only needed when narration is on
     except ImportError:
@@ -60,7 +64,7 @@ def narrate(scenario, record: dict) -> dict:
     try:
         client = anthropic.Anthropic(timeout=30.0, max_retries=1)
         response = client.beta.messages.create(
-            model=MODEL,
+            model=_model(),
             max_tokens=2000,
             output_config={"effort": "low"},          # short paraphrase; no deep reasoning needed
             betas=["server-side-fallback-2026-07-01"],
