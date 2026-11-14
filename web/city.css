@@ -10,12 +10,7 @@
 a.tab { text-decoration: none; display: inline-block; }
 a.tab[aria-current="page"] { background: var(--panel-3); color: var(--text); }
 .bar-status { margin-left: auto; font-size: 13px; color: var(--text-3); min-width: 0; text-wrap: balance; }
-.is-loading .bar-status::before {
-  content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%;
-  background: var(--ivory); margin-right: 8px; vertical-align: 1px; animation: pulse 1s var(--ease) infinite alternate;
-}
-@keyframes pulse { from { opacity: .25; } to { opacity: 1; } }
-@media (prefers-reduced-motion: reduce) { .is-loading .bar-status::before { animation: none; } }
+.is-loading .bar-status { color: var(--text-2); }
 
 .city { max-width: 1480px; margin: 0 auto; padding: 18px 20px 48px; display: flex; flex-direction: column; gap: 16px; }
 
@@ -29,7 +24,7 @@ a.tab[aria-current="page"] { background: var(--panel-3); color: var(--text); }
 .fact dd { margin: 2px 0 0; display: flex; flex-direction: column; gap: 1px; }
 .fact dd b { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; color: var(--text); }
 .fact dd span { font-size: 12.5px; color: var(--text-2); }
-.src { font-size: 10.5px; vertical-align: super; line-height: 0; margin-left: 2px; color: var(--text-3); text-decoration: none; font-family: var(--mono); }
+.src { font-size: 11px; vertical-align: super; line-height: 0; margin-left: 2px; color: var(--text-3); text-decoration: none; font-family: var(--mono); }
 .src:hover { color: var(--ivory); text-decoration: underline; }
 
 /* ---------------- disaster picker ---------------- */
@@ -109,7 +104,7 @@ input[type="range"] { width: 100%; accent-color: var(--ivory); height: 22px; mar
 .timeline li { display: grid; grid-template-columns: 20px 3.4em minmax(0, 1fr); gap: 8px; align-items: baseline; color: var(--text-2); }
 .timeline time { font-family: var(--mono); color: var(--text); font-size: 13px; }
 .tl-n { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--line-strong); font: 500 11px var(--mono); color: var(--text-2); transform: translateY(-1px); }
-.assumption { margin: 14px 0 0; padding: 9px 12px; border-left: 2px solid var(--line-strong); background: var(--panel-2); border-radius: 0 var(--r-sm) var(--r-sm) 0; font-size: 13px; color: var(--text-2); text-wrap: pretty; }
+.assumption { margin: 14px 0 0; padding: 9px 12px; border: 1px solid var(--line); background: var(--panel-2); border-radius: var(--r-sm); font-size: 13px; color: var(--text-2); text-wrap: pretty; }
 .assumption b { color: var(--text); font-weight: 600; }
 
 /* ---------------- charts ---------------- */
@@ -118,7 +113,7 @@ input[type="range"] { width: 100%; accent-color: var(--ivory); height: 22px; mar
 .crit-label { font: 500 11.5px var(--font); fill: var(--text-2); }
 .tl-mark { stroke: var(--text-3); stroke-width: 1; stroke-dasharray: 2 4; }
 .tl-badge circle { fill: var(--panel); stroke: var(--line-strong); }
-.tl-badge text { font: 500 10.5px var(--mono); fill: var(--text-2); }
+.tl-badge text { font: 500 11px var(--mono); fill: var(--text-2); }
 .line-demand { fill: none; stroke: var(--text-2); stroke-width: 1.5; stroke-dasharray: 5 4; }
 .line-supply { fill: none; stroke: var(--ivory); stroke-width: 2.25; }
 .cursor { stroke: var(--ivory); stroke-width: 1; stroke-opacity: .5; pointer-events: none; }
@@ -179,7 +174,7 @@ input[type="range"] { width: 100%; accent-color: var(--ivory); height: 22px; mar
 .inputs { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 12.5px; color: var(--text-2); }
 .inputs li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px; align-items: baseline; }
 .inputs b { color: var(--text); font-weight: 600; }
-.tag { display: inline-block; font: 500 10.5px var(--font); letter-spacing: .04em; text-transform: uppercase; padding: 1px 6px; border-radius: 4px; border: 1px solid; white-space: nowrap; }
+.tag { display: inline-block; font: 500 11px var(--font); letter-spacing: .04em; text-transform: uppercase; padding: 1px 6px; border-radius: 4px; border: 1px solid; white-space: nowrap; }
 .tag-measured { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 45%, transparent); }
 .tag-derived { color: var(--text-2); border-color: var(--line-strong); }
 .tag-assumption { color: var(--stress); border-color: color-mix(in srgb, var(--stress) 45%, transparent); }
