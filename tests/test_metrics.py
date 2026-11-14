@@ -41,3 +41,17 @@ class Metrics(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class NarrationIsOptional(unittest.TestCase):
+    def test_off_by_default_and_core_never_imports_the_llm_sdk(self):
+        import os
+        import subprocess
+        import sys
+        env = {k: v for k, v in os.environ.items() if k != "GRIDPACT_LLM"}
+        code = ("import sys; from gridpact.config import load_scenario; from gridpact.metrics import compare;"
+                "import gridpact.server; compare(load_scenario('cyclone_landfall'), 1, with_series=False);"
+                "from gridpact import narration; assert not narration.enabled();"
+                "assert 'anthropic' not in sys.modules, 'core imported the LLM SDK'")
+        r = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stderr)

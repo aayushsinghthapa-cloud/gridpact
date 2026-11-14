@@ -4,9 +4,10 @@
 (function () {
   "use strict";
 
-  // Fixed, validated colour order (blue, aqua, violet, magenta, green). Colour follows the
+  // Fixed colour per kind; this stacking order (blue, aqua, orange, violet, magenta) passes the
+  // CVD validator for adjacent bands. Colour follows the
   // utility KIND, never its rank, so a hospital is always blue in every scenario.
-  const KIND_ORDER = ["hospital", "water", "emergency", "telecom", "shelter"];
+  const KIND_ORDER = ["hospital", "water", "shelter", "emergency", "telecom"];
   const KIND_LABEL = { hospital: "Hospitals", water: "Water pumping", emergency: "Emergency services", telecom: "Telecom", shelter: "Relief shelters" };
   const kindColor = k => KIND_ORDER.includes(k) ? `var(--s-${k})` : "var(--text-3)";
   const kindIcon = k => KIND_ORDER.includes(k) ? `#i-${k}` : "#i-bolt";
@@ -93,6 +94,9 @@
       const d = await api("/api/step", { session: S.session, n: 1 });
       d.records.forEach(r => S.records.push(r));
       S.queued = [];
+      document.querySelectorAll(".inject-btn.is-queued").forEach(b => { b.classList.remove("is-queued"); b.disabled = false; });
+      $("#inject-queue").textContent = "";
+      d.records.forEach(flashEventTargets);
       S.done = d.done;
       renderAll(d.records[d.records.length - 1]);
       if (S.done) {
@@ -123,20 +127,42 @@
   function setPlayButton() {
     const b = $("#play");
     b.setAttribute("aria-pressed", String(S.playing));
-    b.querySelector("use").setAttribute("href", S.playing ? "#i-pause" : "#i-play");
-    b.querySelector("span").textContent = S.playing ? "Pause" : (S.done ? "Done" : "Play");
-    b.disabled = S.done; $("#step").disabled = S.done;
-    document.querySelectorAll(".inject-btn").forEach(x => { x.disabled = S.done; });
+    b.querySelector("use").setAttribute("href", S.done ? "#i-check" : S.playing ? "#i-pause" : "#i-play");
+    b.querySelector("span").textContent = S.done ? "See results" : S.playing ? "Pause" : "Play";
+    b.title = S.done ? "Compare GridPact with the three baselines" : "Play / pause (Space)";
+    $("#step").disabled = S.done;
+    document.querySelectorAll(".inject-btn").forEach(x => { x.disabled = S.done || x.classList.contains("is-queued"); });
   }
 
-  async function inject(ev) {
-    if (!S.session || S.done) return;
+  function eventDef(label) {
+    return S.info.injectable.concat(S.info.scheduled).find(e => e.label === label);
+  }
+
+  /* Briefly ring the cards an event just hit: one agent, or all of them for a supply shock. */
+  function flashEventTargets(r) {
+    r.events.forEach(label => {
+      const def = eventDef(label);
+      const ids = def && def.agent ? [def.agent] : S.info.agents.map(a => a.id);
+      ids.forEach(id => {
+        const c = document.querySelector(`.agent[data-id="${id}"]`);
+        if (!c) return;
+        c.classList.remove("is-hit"); void c.offsetWidth; c.classList.add("is-hit");
+      });
+    });
+  }
+
+  async function inject(ev, btn) {
+    if (!S.session || S.done || (btn && btn.classList.contains("is-queued"))) return;
+    if (btn) { btn.classList.add("is-queued"); btn.disabled = true; }
     try {
       const d = await api("/api/inject", { session: S.session, event_id: ev.id });
       S.queued.push(d.label);
       S.compare = null;
       $("#inject-queue").textContent = "Queued for " + Charts.fmtHour(d.queued_for_step * S.info.step_minutes / 60) + ": " + S.queued.join("; ");
-    } catch (e) { toast(e.message, true); }
+    } catch (e) {
+      if (btn) { btn.classList.remove("is-queued"); btn.disabled = false; }
+      toast(e.message, true);
+    }
   }
 
   // ------------------------------------------------------------ builders
@@ -147,7 +173,7 @@
       const b = document.createElement("button");
       b.type = "button"; b.className = "inject-btn";
       b.innerHTML = `<svg aria-hidden="true"><use href="#i-alert"/></svg><span>${esc(ev.label)}</span>`;
-      b.addEventListener("click", () => inject(ev));
+      b.addEventListener("click", () => inject(ev, b));
       box.appendChild(b);
     });
     $("#inject-queue").textContent = "";
@@ -156,18 +182,18 @@
   function buildAgents() {
     const box = $("#agents");
     const agents = S.info.agents;
-    $("#agents-note").textContent = agents.length >= COMPACT_AT
-      ? `${agents.length} autonomous agents, one per utility`
-      : "Each card is one autonomous agent with private state";
+    $("#agents-note").innerHTML = (agents.length >= COMPACT_AT
+      ? `${agents.length} autonomous agents, one per utility. `
+      : "One autonomous agent per card. ") + `Bar: grid power vs request; <i class="tick"></i> tick: critical load (fails below)`;
     if (agents.length >= COMPACT_AT) {
       box.className = "agents-compact";
-      box.innerHTML = `<table class="agent-table"><thead><tr>
+      box.innerHTML = `<div class="agent-table-wrap"><table class="agent-table"><thead><tr>
         <th>Utility</th><th>Status</th><th class="num">Grid power</th><th>vs request</th>
         <th class="num">Reserve</th><th class="num">Bid</th><th class="num">Credits</th></tr></thead><tbody>${
         agents.map(a => `<tr data-id="${a.id}"><td><span class="cell-name"><i class="kind-dot" style="--c:${kindColor(a.kind)}"></i>${esc(a.name)}</span></td>
           <td class="c-status"></td><td class="num c-alloc"></td>
           <td><div class="meter" style="--c:${kindColor(a.kind)}"><div class="meter-fill"></div><div class="meter-mark"></div></div></td>
-          <td class="num c-res"></td><td class="num c-bid"></td><td class="num c-cred"></td></tr>`).join("")}</tbody></table>`;
+          <td class="num c-res"></td><td class="num c-bid"></td><td class="num c-cred"></td></tr>`).join("")}</tbody></table></div>`;
       return;
     }
     box.className = "agents";
@@ -179,7 +205,7 @@
           <span class="status status-OK" data-f="status"><svg aria-hidden="true"><use href="#i-check"/></svg><span>OK</span></span>
         </div>
         <div>
-          <div class="metric-row"><span>Grid power</span><span class="nowrap"><b data-f="alloc">–</b> <span class="of" data-f="req"></span></span></div>
+          <div class="metric-row"><span>Grid power</span><span class="nowrap"><b data-f="alloc">–</b><span class="of" data-f="req"></span></span></div>
           <div class="meter" title="Bar: allocation vs request. Tick: critical load (below it the utility fails)"><div class="meter-fill" data-f="allocbar"></div><div class="meter-mark" data-f="minmark"></div></div>
         </div>
         <div>
@@ -188,8 +214,8 @@
         </div>
         <div class="agent-act" data-f="act">Waiting for first step</div>
         <div class="agent-foot">
-          <span>Urgency bid <b data-f="bid">–</b></span>
-          <span>Fairness credits <b data-f="cred">0.0</b> <span data-f="credup"></span></span>
+          <span title="Urgency bid: weight × escalation × reserve scarcity × credit factor">Bid <b data-f="bid">–</b></span>
+          <span title="Earned by giving up more than the average share; each credit raises future bids by 10%. The signed number is this step's change.">Credits <b data-f="cred">0.0</b> <span data-f="credup"></span></span>
         </div>
       </article>`).join("");
   }
@@ -212,7 +238,7 @@
     const gs = groups();
     $("#legend").innerHTML = gs.map(g => `<span><i class="sw" style="background:${g.color}"></i>${esc(g.label)}</span>`).join("")
       + `<span><i class="sw sw-line"></i>Available supply</span><span><i class="sw sw-dash"></i>Total requested</span>`
-      + `<span><i class="sw sw-hatch"></i>Requested but not supplied (load + reserve top-up)</span>`;
+      + `<span><svg class="sw-hatch" viewBox="0 0 12 12" aria-hidden="true"><rect width="12" height="12" fill="url(#hatch)"/></svg>Requested but not supplied (load + reserve top-up)</span>`;
     Charts.supply($("#chart"), {
       records: S.records, totalSteps: S.info.steps, stepHours: S.info.step_minutes / 60,
       groups: gs, yMax: yMax(), scheduled: S.info.scheduled,
@@ -232,7 +258,7 @@
       const why = a.cascade_from.length ? ` (cascade from ${a.cascade_from.map(agentName).join(", ")})` : "";
       return { cls: "act-fail", icon: "#i-x", text: "Below critical load" + why };
     }
-    if (a.conceded_kw > 0) return { cls: "act-concede", icon: "#i-down", text: `Conceded ${kw(a.conceded_kw)} this step` };
+    if (a.conceded_kw > 0) return { cls: "act-concede", icon: "#i-down", text: `Conceded ${kw(a.conceded_kw)}` };
     if (r.log.some(l => l.kind === "hold" && l.agent === id)) return { cls: "act-hold", icon: "#i-lock", text: "Holding firm at critical load" };
     if (a.cascade_from.length) return { cls: "act-hold", icon: "#i-alert", text: `Degraded by ${a.cascade_from.map(agentName).join(", ")} outage` };
     if (a.discharge_kw > 0.5) return { cls: "", icon: "#i-bolt", text: `Running ${kw(a.discharge_kw)} from reserve` };
@@ -269,8 +295,8 @@
       card.classList.toggle("is-stressed", a.status === "STRESSED");
       const st = f("status");
       st.className = `status status-${a.status}`; st.innerHTML = statusHTML(a.status);
-      f("alloc").textContent = kw(a.alloc_kw);
-      f("req").textContent = `of ${kw(a.request_max_kw)}`;
+      f("alloc").textContent = Math.round(a.alloc_kw).toLocaleString();
+      f("req").textContent = ` / ${kw(a.request_max_kw)}`;
       f("allocbar").style.width = pct(fill);
       f("minmark").style.left = `calc(${pct(minPos)} - 1px)`;
       f("res").textContent = pct(a.reserve_frac);
@@ -322,7 +348,7 @@
     Object.keys(rounds).map(Number).sort((a, b) => a - b).forEach(rd => {
       const ls = rounds[rd], total = ls.reduce((t, l) => t + l.watts, 0);
       const top = ls.slice().sort((a, b) => b.watts - a.watts)[0];
-      out.push({ kind: "concede", round: rd, text: `${ls.length} utilities conceded ${kw(total / 1000)} in total (largest: ${agentName(top.agent)}, ${kw(top.watts / 1000)}).` });
+      out.push({ kind: "concede", round: rd, text: `${ls.length} utilit${ls.length === 1 ? "y" : "ies"} conceded ${(total / 1000).toFixed(1)} kW in total (largest: ${agentName(top.agent)}, ${(top.watts / 1000).toFixed(1)} kW).` });
     });
     const credits = lines.filter(l => l.kind === "credit").sort((a, b) => b.delta - a.delta);
     if (credits.length) {
@@ -340,15 +366,33 @@
     div.className = "log-step";
     const demand = Object.values(r.agents).reduce((s, a) => s + a.request_max_kw, 0);
     const tag = r.contested
-      ? `<span class="log-tag is-contested">contested · short ${kw(demand - r.supply_kw)} · ${r.rounds} round${r.rounds === 1 ? "" : "s"}${r.fallback ? " · fallback" : ""}</span>`
+      ? `<span class="log-tag is-contested">contested · short ${kw(demand - r.supply_kw)} · ${r.rounds} round${r.rounds === 1 ? "" : "s"}</span>${r.fallback ? `<span class="log-tag is-fallback">fallback</span>` : ""}`
       : `<span class="log-tag">uncontested</span>`;
     let h = `<div class="log-step-head"><span class="log-time">${Charts.fmtHour(r.hour)}</span>${tag}</div>`;
-    r.events.forEach(e => { h += `<div class="log-event"><svg aria-hidden="true"><use href="#i-alert"/></svg><span>${esc(e)}</span></div>`; });
-    let lines = r.contested ? r.log.filter(l => l.kind !== "open") : r.log;
+    const outcome = r.log.find(l => ["agree", "fallback", "grant"].includes(l.kind));
+    const failed = Object.entries(r.agents).filter(([, a]) => a.status === "FAILED").map(([id]) => agentName(id));
+    if (outcome && r.contested) h += `<p class="log-outcome${r.fallback ? " is-fallback" : ""}">${esc(outcome.text)}</p>`;
+    if (r.events.length) {
+      const conceded = Object.entries(r.agents).filter(([, a]) => a.conceded_kw > 0).sort((x, y) => y[1].conceded_kw - x[1].conceded_kw);
+      const held = r.log.filter(l => l.kind === "hold").map(l => agentName(l.agent));
+      let resp = `<b>Response to ${esc(r.events.join("; "))}.</b> `;
+      if (!r.contested) resp += "Supply still covers every request: no negotiation needed.";
+      else {
+        resp += conceded.length ? `${conceded.slice(0, 3).map(([id, a]) => `${esc(agentName(id))} gave up ${kw(a.conceded_kw)}`).join(", ")}${conceded.length > 3 ? ` and ${conceded.length - 3} more` : ""}. ` : "";
+        resp += held.length ? `${esc(held.join(", "))} held firm. ` : "";
+        resp += r.fallback ? "No agreement: deterministic fallback applied. " : `Agreement in ${r.rounds} round${r.rounds === 1 ? "" : "s"}. `;
+      }
+      resp += failed.length ? `Below critical load: ${esc(failed.join(", "))}.` : "No utility below critical load.";
+      h += `<div class="log-response">${resp}</div>`;
+    }
+    let lines = (r.contested ? r.log.filter(l => l.kind !== "open") : r.log).filter(l => !["agree", "grant"].includes(l.kind));
     if (S.info.agents.length >= COMPACT_AT) lines = summarizeLog(lines);
     lines.forEach(l => {
-      h += `<div class="log-line k-${l.kind}"><span class="log-round">${l.round ? "R" + l.round : ""}</span><span>${esc(l.text)}</span></div>`;
+      const tagTxt = l.kind === "hold" ? "hold" : l.kind === "credit" ? "" : (l.round ? "R" + l.round : "");
+      h += `<div class="log-line k-${l.kind}"><span class="log-round">${tagTxt}</span><span>${esc(l.text)}</span></div>`;
     });
+    const hiddenN = lines.filter(l => l.kind === "concede" || l.kind === "credit").length;
+    if (hiddenN) h += `<p class="log-more">${hiddenN} concession and credit line${hiddenN === 1 ? "" : "s"} folded</p>`;
     const failures = Object.entries(r.agents).filter(([, a]) => a.new_failure);
     failures.forEach(([id, a]) => {
       const why = a.cascade_from.length ? `: cascade from ${a.cascade_from.map(agentName).join(", ")}` : "";
@@ -388,24 +432,31 @@
     const c = S.compare, P = c.policies, order = c.order;
     const base = order.filter(p => p !== "gridpact");
     const ch = c.damage_change_pct;
-    const worstBase = base.slice().sort((a, b) => ch[a] - ch[b])[0];   // biggest reduction
-    const bestBase = base.slice().sort((a, b) => P[a].total_damage - P[b].total_damage)[0];
+    const byDamage = order.slice().sort((a, b) => P[a].total_damage - P[b].total_damage);
+    const nextBest = byDamage.find(p => p !== "gridpact");
     const fmtPct = v => `${Math.abs(v).toFixed(1)}%`;
-    let headline;
-    if (ch[worstBase] < 0) {
-      headline = `GridPact cut total damage by <em>${fmtPct(ch[worstBase])}</em> against ${esc(P[worstBase].label.toLowerCase())}`;
-    } else headline = `GridPact did not reduce damage against the baselines on this run`;
-    const others = base.filter(p => p !== worstBase).map(p =>
-      `${ch[p] <= 0 ? "−" : "+"}${fmtPct(ch[p])} vs ${esc(P[p].label.toLowerCase())}`).join(", ");
+    const gpBest = byDamage[0] === "gridpact";
+    const failRange = base.map(p => P[p].failure_events);
+    const headline = gpBest
+      ? `Lowest damage of all four policies: <em>${fmtPct(ch[nextBest])} less</em> than the next best, ${esc(P[nextBest].label.toLowerCase())}`
+      : `${esc(P[byDamage[0]].label)} did less damage than GridPact on this run`;
+    const others = base.map(p => `${fmtPct(ch[p])} ${ch[p] <= 0 ? "less" : "more"} than ${esc(P[p].label.toLowerCase())}`).join(", ");
+    const maxDmg = Math.max(...order.map(p => P[p].total_damage)) || 1;
+    const bars = byDamage.map(p => `<span class="${p === "gridpact" ? "is-gp-label" : ""}">${p === "gridpact" ? "GridPact" : esc(P[p].label)}</span>
+      <span><i class="dmg-bar${p === "gridpact" ? " is-gp" : ""}" style="display:block;width:${(P[p].total_damage / maxDmg * 100).toFixed(1)}%"></i></span>
+      <span class="num">${Math.round(P[p].total_damage).toLocaleString()}</span>`).join("");
     const injected = (c.injected || []).length;
     const box = $("#results");
     box.innerHTML = `<div class="results-wrap">
       <div class="results-head">
         <div>
           <h1 class="headline">${headline}.</h1>
-          <p class="results-sub">${others}. Zero capacity violations for every policy. Same scenario (${esc(S.info.name)}), seed ${c.seed}, and identical event log for all four runs; every number below was computed by the simulator just now.</p>
+          <p class="results-sub">GridPact: ${others}. Failure events: ${P.gridpact.failure_events} for GridPact vs ${Math.min(...failRange)}–${Math.max(...failRange)} for the baselines. Zero capacity violations for every policy. Same scenario (${esc(S.info.name)}), seed ${c.seed}, and identical event log for all four runs; every number below was computed by the simulator just now.</p>
         </div>
-        <button class="btn" id="rerun" type="button"><svg aria-hidden="true"><use href="#i-reset"/></svg><span>Re-run comparison</span></button>
+        <div class="results-side">
+          <div class="dmg-bars" aria-label="Total damage by policy, lower is better">${bars}</div>
+          <button class="btn" id="rerun" type="button"><svg aria-hidden="true"><use href="#i-reset"/></svg><span>Re-run comparison</span></button>
+        </div>
       </div>
       <div class="results-grid">
         <section class="panel"><div class="panel-head"><h2>Every metric, same conditions</h2><span class="panel-note">Dot marks the best value per row</span></div>
@@ -474,7 +525,7 @@
     $("#scenario").addEventListener("change", startSession);
     $("#restart").addEventListener("click", startSession);
     $("#seed").addEventListener("keydown", e => { if (e.key === "Enter") startSession(); });
-    $("#play").addEventListener("click", () => (S.playing ? stop() : play()));
+    $("#play").addEventListener("click", () => (S.done ? showTab("results") : S.playing ? stop() : play()));
     $("#step").addEventListener("click", () => { stop(); stepOnce(); });
     $("#tab-live").addEventListener("click", () => showTab("live"));
     $("#tab-results").addEventListener("click", () => showTab("results"));

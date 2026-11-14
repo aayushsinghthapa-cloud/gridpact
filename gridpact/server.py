@@ -44,8 +44,8 @@ def scenario_info(sc) -> dict:
                    for a in sc.agents],
         "dependencies": [{"source": d.source, "target": d.target, "impact": d.impact, "label": d.label}
                          for d in sc.dependencies],
-        "injectable": [{"id": e.id, "label": e.label, "type": e.type} for e in sc.injectable],
-        "scheduled": [{"step": s, "label": e.label} for s, e in sc.scheduled],
+        "injectable": [{"id": e.id, "label": e.label, "type": e.type, "agent": e.agent} for e in sc.injectable],
+        "scheduled": [{"step": s, "label": e.label, "type": e.type, "agent": e.agent} for s, e in sc.scheduled],
     }
 
 

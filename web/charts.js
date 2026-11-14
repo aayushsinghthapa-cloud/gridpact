@@ -24,6 +24,11 @@
     return out;
   }
 
+  /* Hour spacing for x-axis labels: the smallest step that keeps labels >= 56px apart. */
+  function hourStep(hours, width) {
+    return [1, 2, 3, 4, 6, 8, 12, 24].find(h => (width / hours) * h >= 56) || 24;
+  }
+
   function fmtHour(h) {
     const hh = Math.floor(h), mm = Math.round((h - hh) * 60);
     return String(hh).padStart(2, "0") + ":" + String(mm).padStart(2, "0");
@@ -66,7 +71,7 @@
   /* opts: {records, totalSteps, stepHours, groups:[{key,label,color,ids}], yMax, scheduled:[{step,label}]} */
   function supply(container, opts) {
     const W = container.clientWidth || 800, H = container.clientHeight || 290;
-    const m = { l: 56, r: 14, t: 14, b: 26 };
+    const m = { l: 56, r: 14, t: 20, b: 26 };
     const iw = W - m.l - m.r, ih = H - m.t - m.b;
     const N = Math.max(1, opts.totalSteps);
     const recs = opts.records;
@@ -87,7 +92,7 @@
       t.textContent = v === 0 ? "0" : fmtKw(v);
     });
     const hours = N * opts.stepHours;
-    const every = hours > 30 ? 6 : hours > 14 ? 3 : 2;
+    const every = hourStep(hours, iw);
     for (let h = 0; h <= hours + 1e-9; h += every) {
       const t = el("text", { x: x(h / opts.stepHours), y: H - 6, "text-anchor": h === 0 ? "start" : "middle" }, ax);
       t.textContent = fmtHour(h);
@@ -101,9 +106,18 @@
       const cur = markers.get(r.step) || [];
       if (!cur.includes(l)) markers.set(r.step, cur.concat(l));
     }));
-    markers.forEach((labels, s) => {
+    let lastLabelEnd = -Infinity;
+    [...markers.entries()].sort((a, b) => a[0] - b[0]).forEach(([s, labels]) => {
       el("line", { x1: x(s), x2: x(s), y1: m.t, y2: m.t + ih, stroke: "var(--stress)", "stroke-width": 1, "stroke-dasharray": "2 4", opacity: .55 }, evG);
       el("path", { d: `M${x(s) - 5},${m.t - 9}L${x(s) + 5},${m.t - 9}L${x(s)},${m.t - 2}Z`, fill: "var(--stress)" }, evG);
+      // short label beside the marker (the part before ":"), skipped if it would collide
+      const short = labels[0].split(":")[0] + (labels.length > 1 ? ` +${labels.length - 1}` : "");
+      const tx = x(s) + 8, approx = short.length * 6.4;
+      if (tx > lastLabelEnd + 8 && tx + approx < W - m.r) {
+        const t = el("text", { x: tx, y: m.t - 2, fill: "var(--stress)", style: "font: 500 12px var(--font)" }, evG);
+        t.textContent = short;
+        lastLabelEnd = tx + approx;
+      }
     });
 
     if (!recs.length) {
@@ -186,7 +200,7 @@
       const t = el("text", { x: m.l - 8, y: y(v) + 4, "text-anchor": "end" }, ax);
       t.textContent = v >= 1000 ? (v / 1000).toLocaleString() + "k" : String(v);
     });
-    const hours = N * opts.stepHours, every = hours > 30 ? 6 : 4;
+    const hours = N * opts.stepHours, every = hourStep(hours, iw);
     for (let h = 0; h <= hours + 1e-9; h += every) {
       const t = el("text", { x: x(h / opts.stepHours), y: H - 6, "text-anchor": h === 0 ? "start" : "middle" }, ax);
       t.textContent = fmtHour(h);
