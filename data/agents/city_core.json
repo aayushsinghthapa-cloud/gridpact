@@ -1,0 +1,30 @@
+{
+  "description": "Four core city utilities. Loads in kW, reserves in kWh-equivalent of backup service.",
+  "agents": [
+    {"id": "hospital", "name": "Hospital", "kind": "hospital", "priority_rank": 1, "weight": 1.0,
+     "min_kw": 300, "desired_kw": 450,
+     "reserve_capacity_kwh": 1200, "reserve_initial_frac": 0.85, "max_discharge_kw": 250, "recharge_kw": 150,
+     "damage_soft": 1.0, "damage_critical": 8.0, "escalation": 0.10, "escalation_cap_steps": 24,
+     "reserve_label": "Diesel backup"},
+    {"id": "emergency", "name": "Emergency Services", "kind": "emergency", "priority_rank": 2, "weight": 0.9,
+     "min_kw": 120, "desired_kw": 200,
+     "reserve_capacity_kwh": 240, "reserve_initial_frac": 0.70, "max_discharge_kw": 100, "recharge_kw": 60,
+     "damage_soft": 1.0, "damage_critical": 8.0, "escalation": 0.10, "escalation_cap_steps": 24,
+     "reserve_label": "Station batteries"},
+    {"id": "water", "name": "Water Pumping", "kind": "water", "priority_rank": 3, "weight": 0.75,
+     "min_kw": 200, "desired_kw": 360,
+     "reserve_capacity_kwh": 800, "reserve_initial_frac": 0.90, "max_discharge_kw": 160, "recharge_kw": 120,
+     "damage_soft": 1.0, "damage_critical": 6.0, "escalation": 0.08, "escalation_cap_steps": 24,
+     "reserve_label": "Elevated tank level"},
+    {"id": "telecom", "name": "Telecom", "kind": "telecom", "priority_rank": 4, "weight": 0.6,
+     "min_kw": 80, "desired_kw": 150,
+     "reserve_capacity_kwh": 320, "reserve_initial_frac": 0.90, "max_discharge_kw": 80, "recharge_kw": 60,
+     "damage_soft": 1.0, "damage_critical": 6.0, "escalation": 0.08, "escalation_cap_steps": 24,
+     "reserve_label": "Tower batteries"}
+  ],
+  "dependencies": [
+    {"source": "telecom", "target": "emergency", "impact": 0.35, "label": "112 call routing and dispatch radio go down"},
+    {"source": "water", "target": "hospital", "impact": 0.25, "label": "No water pressure for sterilisation, dialysis and cooling"},
+    {"source": "telecom", "target": "hospital", "impact": 0.10, "label": "Ambulance coordination and records lost"}
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "order": 2,
+  "name": "Cascading substation failures",
+  "description": "Three substations trip one after another (02:15, 06:15, 11:15), stepping supply down to 48%. Restoration starts at 16:00.",
+  "agents": "agents/city_core.json",
+  "hours": 24,
+  "step_minutes": 15,
+  "supply": {
+    "base_kw": 1300,
+    "noise_frac": 0.03,
+    "profile": [[0, 1.0], [2, 1.0], [2.25, 0.80], [6, 0.80], [6.25, 0.62], [11, 0.62], [11.25, 0.48], [16, 0.48], [18, 0.68], [24, 0.78]]
+  },
+  "scheduled_events": [
+    {"at_hour": 9, "type": "reserve_loss", "agent": "telecom", "fraction": 0.3, "label": "Overheated tower batteries: Telecom loses 30% reserve"}
+  ],
+  "injectable_events": [
+    {"id": "substation4", "type": "supply_shock", "factor": 0.7, "duration_hours": 2, "label": "Substation 4 fails: −30% supply for 2 h"},
+    {"id": "feeder", "type": "supply_shock", "factor": 0.85, "duration_hours": 1, "label": "Feeder trip: −15% supply for 1 h"},
+    {"id": "diesel", "type": "reserve_loss", "agent": "hospital", "fraction": 0.5, "label": "Diesel delivery missed: Hospital loses 50% reserve"},
+    {"id": "pump", "type": "demand_surge", "agent": "water", "factor": 1.25, "duration_hours": 3, "label": "Main burst: Water load +25% for 3 h"}
+  ]
+}

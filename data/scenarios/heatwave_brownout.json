@@ -1,0 +1,24 @@
+{
+  "order": 3,
+  "name": "Long heatwave brownout",
+  "description": "A 36-hour heatwave. Supply never recovers above 68% while cooling loads surge at the hospital and water pumps. Reserves drain slowly; fairness over time matters most here.",
+  "agents": "agents/city_core.json",
+  "hours": 36,
+  "step_minutes": 15,
+  "supply": {
+    "base_kw": 1300,
+    "noise_frac": 0.03,
+    "profile": [[0, 0.68], [6, 0.64], [12, 0.55], [16, 0.52], [20, 0.60], [26, 0.62], [32, 0.54], [36, 0.58]]
+  },
+  "scheduled_events": [
+    {"at_hour": 10, "type": "demand_surge", "agent": "water", "factor": 1.2, "duration_hours": 8, "label": "Heat peak: Water pumping load +20%"},
+    {"at_hour": 11, "type": "demand_surge", "agent": "hospital", "factor": 1.15, "duration_hours": 7, "label": "Heatstroke admissions: Hospital load +15%"},
+    {"at_hour": 34, "type": "demand_surge", "agent": "water", "factor": 1.2, "duration_hours": 2, "label": "Second heat peak: Water load +20%"}
+  ],
+  "injectable_events": [
+    {"id": "rolling", "type": "supply_shock", "factor": 0.8, "duration_hours": 3, "label": "Rolling blackout: −20% supply for 3 h"},
+    {"id": "feeder", "type": "supply_shock", "factor": 0.85, "duration_hours": 1, "label": "Feeder trip: −15% supply for 1 h"},
+    {"id": "diesel", "type": "reserve_loss", "agent": "hospital", "fraction": 0.4, "label": "Generator fault: Hospital loses 40% reserve"},
+    {"id": "tower", "type": "reserve_loss", "agent": "telecom", "fraction": 0.5, "label": "Tower batteries overheat: Telecom loses 50% reserve"}
+  ]
+}

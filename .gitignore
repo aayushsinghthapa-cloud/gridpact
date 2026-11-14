@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.DS_Store
+# local editor/agent hook configs written by `npx impeccable install` (contain absolute local paths)
+.codex/
+.cursor/
+.impeccable/config.local.json
+.impeccable/questions/
+.impeccable/mocks/
+.impeccable/review/

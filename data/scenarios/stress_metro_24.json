@@ -1,0 +1,22 @@
+{
+  "order": 4,
+  "name": "Metro stress test (24 utilities)",
+  "description": "Scalability test: 24 utilities across a metro region (hospitals, water, emergency, telecom, relief shelters) through a cyclone-style collapse to 50% supply.",
+  "agents": "agents/metro_24.json",
+  "hours": 24,
+  "step_minutes": 15,
+  "supply": {
+    "base_kw": 5600,
+    "noise_frac": 0.04,
+    "profile": [[0, 1.0], [4, 1.0], [5, 0.50], [11, 0.50], [12, 0.66], [18, 0.74], [24, 0.85]]
+  },
+  "scheduled_events": [
+    {"at_hour": 6, "type": "demand_surge", "agent": "hospital_4", "factor": 1.3, "duration_hours": 6, "label": "Mass-casualty event: Trauma Centre load +30%"}
+  ],
+  "injectable_events": [
+    {"id": "grid", "type": "supply_shock", "factor": 0.7, "duration_hours": 2, "label": "Transmission line down: −30% supply for 2 h"},
+    {"id": "feeder", "type": "supply_shock", "factor": 0.85, "duration_hours": 1, "label": "Feeder trip: −15% supply for 1 h"},
+    {"id": "diesel", "type": "reserve_loss", "agent": "hospital_1", "fraction": 0.5, "label": "City General diesel flooded: −50% reserve"},
+    {"id": "core", "type": "reserve_loss", "agent": "telecom_1", "fraction": 0.7, "label": "Core Exchange batteries fail: −70% reserve"}
+  ]
+}
