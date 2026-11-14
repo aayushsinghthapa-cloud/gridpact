@@ -311,6 +311,27 @@
 
   const LOG_ICON = { credit: "#i-handshake", concede: "#i-down", hold: "#i-lock", fallback: "#i-alert", reject: "#i-alert", short: "#i-x", agree: "#i-handshake", grant: "#i-check", open: "#i-bolt", phase: "#i-alert" };
 
+  /* With many agents, one line per agent per round is unreadable: fold each
+     round's concessions, and the hold-firm and credit lines, into summaries. */
+  function summarizeLog(lines) {
+    const out = [];
+    const holds = lines.filter(l => l.kind === "hold");
+    if (holds.length) out.push({ kind: "hold", round: 0, text: `${holds.length} utilit${holds.length === 1 ? "y holds" : "ies hold"} firm at critical load (reserve below 30%): ${holds.map(l => agentName(l.agent)).join(", ")}.` });
+    const rounds = {};
+    lines.filter(l => l.kind === "concede").forEach(l => { (rounds[l.round] = rounds[l.round] || []).push(l); });
+    Object.keys(rounds).map(Number).sort((a, b) => a - b).forEach(rd => {
+      const ls = rounds[rd], total = ls.reduce((t, l) => t + l.watts, 0);
+      const top = ls.slice().sort((a, b) => b.watts - a.watts)[0];
+      out.push({ kind: "concede", round: rd, text: `${ls.length} utilities conceded ${kw(total / 1000)} in total (largest: ${agentName(top.agent)}, ${kw(top.watts / 1000)}).` });
+    });
+    const credits = lines.filter(l => l.kind === "credit").sort((a, b) => b.delta - a.delta);
+    if (credits.length) {
+      const best = credits[0], worst = credits[credits.length - 1];
+      out.push({ kind: "credit", round: 0, text: `Fairness ledger: ${agentName(best.agent)} earned the most (${best.delta >= 0 ? "+" : "−"}${Math.abs(best.delta).toFixed(1)}), ${agentName(worst.agent)} paid the most (${worst.delta >= 0 ? "+" : "−"}${Math.abs(worst.delta).toFixed(1)}).` });
+    }
+    return out.concat(lines.filter(l => !["hold", "concede", "credit"].includes(l.kind)));
+  }
+
   function prependLog(r) {
     const box = $("#log");
     if (box.querySelector(".log-empty")) box.innerHTML = "";
@@ -323,7 +344,8 @@
       : `<span class="log-tag">uncontested</span>`;
     let h = `<div class="log-step-head"><span class="log-time">${Charts.fmtHour(r.hour)}</span>${tag}</div>`;
     r.events.forEach(e => { h += `<div class="log-event"><svg aria-hidden="true"><use href="#i-alert"/></svg><span>${esc(e)}</span></div>`; });
-    const lines = r.contested ? r.log.filter(l => l.kind !== "open") : r.log;
+    let lines = r.contested ? r.log.filter(l => l.kind !== "open") : r.log;
+    if (S.info.agents.length >= COMPACT_AT) lines = summarizeLog(lines);
     lines.forEach(l => {
       h += `<div class="log-line k-${l.kind}"><span class="log-round">${l.round ? "R" + l.round : ""}</span><span>${esc(l.text)}</span></div>`;
     });
