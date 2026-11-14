@@ -104,7 +104,10 @@ only 3.8% less damage). What proportional can't do is *use reserves strategicall
 everyone the same fraction whether their diesel tank is full or empty. In the cyclone that leads
 to 1.7 failure events per run on average and 78 kWh of critical energy unserved, against 0 and 0
 for GridPact. In a hospital, "0 failures" is the number that matters. Proportional also wins on
-Jain's index (0.999 vs 0.998), and we report that too.
+Jain's index (0.999 vs 0.998), and we report that too. You can watch this live: in the cyclone,
+proportional is slightly ahead of GridPact from about 06:00 to 10:00 on seed 41 (GridPact is
+spending reserves to keep everyone above critical load), then falls behind for good once its
+utilities start failing.
 
 ### 11. "Why should the hospital ever give up power?"
 

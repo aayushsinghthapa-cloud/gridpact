@@ -245,9 +245,46 @@ svg.plot { width: 100%; height: 100%; display: block; stroke: none; fill: none; 
 .panel-agents .agent-table-wrap { border: 1px solid var(--line); border-radius: var(--r); padding: 10px 8px 4px; }
 .agent-table td, .agent-table th { white-space: nowrap; }
 .panel-inject { flex: none; }
-.inject-list { display: flex; flex-direction: column; gap: 6px; }
+
+/* ---------------- live standings ---------------- */
+.panel-standings { flex: none; }
+.panel-standings .panel-head, .panel-inject .panel-head { margin-bottom: 8px; }
+.standings { display: grid; grid-template-columns: max-content minmax(60px, 1fr) max-content max-content; gap: 7px 10px; align-items: center; font-size: 13px; color: var(--text-2); }
+.standings .st-name { white-space: nowrap; }
+.standings .st-name.is-gp { color: var(--text); font-weight: 600; }
+.standings .st-bar { height: 10px; border-radius: 0 3px 3px 0; background: var(--text-3); opacity: .65; transition: width .35s var(--ease); min-width: 1px; }
+.standings .st-bar.is-gp { background: var(--ivory); opacity: 1; }
+.standings .st-num { text-align: right; color: var(--text); font-weight: 500; }
+.standings .st-fail { text-align: right; font-size: 12px; color: var(--text-3); white-space: nowrap; }
+.standings .st-fail.has-fail { color: var(--fail); }
+.standings-note { margin: 8px 0 0; font-size: 12px; color: var(--text-3); line-height: 1.45; text-wrap: balance; }
+.standings-lead { grid-column: 1 / -1; font-size: 13px; color: var(--text); margin: 0 0 2px; text-wrap: balance; }
+.standings-lead b { color: var(--ivory); }
+
+/* ---------------- negotiation ledger (latest step) ---------------- */
+.ledger { width: 100%; border-collapse: collapse; font-size: 12.5px; margin: 4px 0 8px; font-variant-numeric: tabular-nums; }
+.ledger th, .ledger td { padding: 4px 6px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.ledger th:first-child, .ledger td:first-child { text-align: left; color: var(--text-3); font: 500 12px var(--mono); }
+.ledger thead th { font: 500 12px var(--font); color: var(--text-2); vertical-align: bottom; }
+.ledger thead th .lh { display: inline-flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.ledger thead th svg { width: 14px; height: 14px; color: var(--c); }
+.ledger td { color: var(--text); }
+.ledger td.nil { color: var(--text-3); }
+.ledger tr.l-final td { border-top: 1px solid var(--line-strong); font-weight: 600; }
+.ledger tr.l-credit td { color: var(--text-2); }
+.ledger .held { display: inline-flex; align-items: center; gap: 2px; color: var(--stress); font-size: 11.5px; font-weight: 600; }
+.ledger .held svg { width: 11px; height: 11px; color: var(--stress); }
+.ledger-caption { font-size: 12px; color: var(--text-3); margin: 0 0 2px; }
+.log-step.is-old .ledger, .log-step.is-old .ledger-caption { display: none; }
+.log-step.has-ledger:not(.is-old) .log-line.k-concede, .log-step.has-ledger:not(.is-old) .log-line.k-credit,
+.log-step.has-ledger:not(.is-old) .log-more { display: none; }
+
+/* presenter key hint on inject buttons */
+.inject-btn span { flex: 1; }
+.kbd { font: 500 11.5px var(--mono); color: var(--text-3); border: 1px solid var(--line-strong); border-radius: 4px; padding: 0 5px; line-height: 18px; }
+.inject-list { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .inject-btn {
-  display: flex; align-items: center; gap: 9px; text-align: left; width: 100%;
+  display: flex; align-items: center; gap: 7px; min-height: 36px; text-align: left; width: 100%;
   font: 500 13px/1.3 var(--font); color: var(--text);
   background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--r-sm);
   padding: 8px 10px; cursor: pointer; transition: border-color .15s var(--ease), background-color .15s var(--ease);

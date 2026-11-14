@@ -117,10 +117,19 @@
     </div>
 
     <aside class="col-side">
+      <section class="panel panel-standings" aria-labelledby="standings-title">
+        <div class="panel-head">
+          <h2 id="standings-title">Same storm, every policy</h2>
+          <span class="panel-note">damage so far</span>
+        </div>
+        <div id="standings" class="standings" aria-live="polite"></div>
+        <p class="standings-note">Baselines run in lockstep on the same seed and events, including yours.</p>
+      </section>
+
       <section class="panel panel-inject" aria-labelledby="inject-title">
         <div class="panel-head">
           <h2 id="inject-title">Inject event</h2>
-          <span class="panel-note">Lands on the next step</span>
+          <span class="panel-note">Next step · keys 1–9</span>
         </div>
         <div id="inject" class="inject-list"></div>
         <div id="inject-queue" class="inject-queue" aria-live="polite"></div>

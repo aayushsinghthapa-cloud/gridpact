@@ -11,7 +11,7 @@ concede and agree** on a split of the fluctuating supply. A **neutral validator*
 physics (never more than the supply, never more than requested) and commits each step
 **atomically**. It never decides who gets what.
 
-![Live run: cyclone landfall at 11:00, agents negotiating](docs/screenshots/live-cyclone.webp)
+![Live run: cyclone landfall at 17:30, agents negotiating, baselines in lockstep](docs/screenshots/live-cyclone.webp)
 
 ## Results (from real runs, 10 seeds per scenario)
 
@@ -40,7 +40,7 @@ Other commands:
 
 ```bash
 python3 gridpact.py check                               # pre-flight on the demo laptop: tests, scenarios, port, narration
-python3 gridpact.py test                                # all 52 tests (the hard guarantees)
+python3 gridpact.py test                                # all 54 tests (the hard guarantees)
 python3 gridpact.py run cyclone_landfall --seed 41      # headless: every policy, every metric
 python3 gridpact.py results                             # regenerate RESULTS.md (~7 s)
 python3 scripts/worked_example.py                       # regenerate the worked example in ALGORITHM.md
@@ -65,7 +65,9 @@ Scenarios and agents are JSON in [`data/`](data/). Add a utility or a disaster b
 ### Using the dashboard
 
 - **Play / Pause** (Space), **Step** (→), **Speed**, **Seed**, **Restart**.
-- **Inject event**: for example "Substation 2 fails: −30% supply for 2 h". It lands on the next step, and the log shows how the agents responded.
+- **Same storm, every policy**: the three baselines run in lockstep with the live run (same seed, same events, including yours), so the damage comparison updates as you watch.
+- **Inject event** (keys **1–9**): for example "Substation 2 fails: −30% supply for 2 h". It lands on the next step, and the log shows how the agents responded.
+- **Negotiation ledger**: the latest step's rounds as a table: what each agent asked for, conceded per round, got, and its credit change.
 - **Negotiation log**: the outcome first, then who held firm, then each round's concessions and the fairness-credit changes.
 - **Guarantees strip** (always visible): capacity violations, steps committed or rolled back, validator checks.
 - **Results vs baselines**: re-runs all four policies on the same seed *and the same injected events*.
@@ -117,12 +119,13 @@ gridpact/                engine (standard library only)
   baselines.py           equal / proportional / strict priority
   metrics.py             all metrics + policy comparison
   config.py, models.py   data loading and frozen records
+  live.py                live run + baselines in lockstep
   server.py              offline HTTP server + JSON API
   narration.py           optional LLM narration
 web/                     dashboard (vanilla JS, SVG charts, bundled fonts)
 data/                    agents and scenarios (JSON)
 scripts/                 results generator, worked example, stress-agent generator
-tests/                   52 unittest tests
+tests/                   54 unittest tests
 ```
 
 Design context for the UI lives in [PRODUCT.md](PRODUCT.md) (Impeccable design skill).

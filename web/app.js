@@ -20,7 +20,7 @@
   const S = {
     scenarios: [], info: null, session: null, seed: 41, records: [],
     playing: false, timer: null, busy: false, done: false,
-    rollbacks: 0, queued: [], compare: null, narration: false,
+    rollbacks: 0, queued: [], compare: null, narration: false, standings: null,
   };
 
   // ------------------------------------------------------------ api
@@ -77,7 +77,7 @@
     try {
       const d = await api("/api/session", { scenario, seed });
       Object.assign(S, { session: d.session, info: d.scenario, seed: d.seed, records: [], done: false,
-        rollbacks: 0, queued: [], compare: null });
+        rollbacks: 0, queued: [], compare: null, standings: null });
       $("#scenario-desc").textContent = S.info.description;
       $("#g-seed").textContent = `Deterministic · seed ${S.seed}`;
       buildAgents(); buildInject(); renderAll();
@@ -93,6 +93,7 @@
     try {
       const d = await api("/api/step", { session: S.session, n: 1 });
       d.records.forEach(r => S.records.push(r));
+      S.standings = d.standings || S.standings;
       S.queued = [];
       document.querySelectorAll(".inject-btn.is-queued").forEach(b => { b.classList.remove("is-queued"); b.disabled = false; });
       $("#inject-queue").textContent = "";
@@ -172,7 +173,13 @@
     S.info.injectable.forEach(ev => {
       const b = document.createElement("button");
       b.type = "button"; b.className = "inject-btn";
-      b.innerHTML = `<svg aria-hidden="true"><use href="#i-alert"/></svg><span>${esc(ev.label)}</span>`;
+      const i = S.info.injectable.indexOf(ev);
+      // Short name on the button (text before ":"); the full effect is in the tooltip and the log.
+      const shortLabel = ev.label.split(":")[0];
+      b.title = ev.label;
+      b.setAttribute("aria-label", ev.label);
+      b.innerHTML = `<svg aria-hidden="true"><use href="#i-alert"/></svg><span>${esc(shortLabel)}</span>${i < 9 ? `<kbd class="kbd" aria-hidden="true">${i + 1}</kbd>` : ""}`;
+      if (i < 9) b.setAttribute("aria-keyshortcuts", String(i + 1));
       b.addEventListener("click", () => inject(ev, b));
       box.appendChild(b);
     });
@@ -222,7 +229,7 @@
 
   // ------------------------------------------------------------ renderers
   function renderAll(last) {
-    renderClock(); renderChart(); renderAgents(last); renderGuarantees(last);
+    renderClock(); renderChart(); renderAgents(last); renderGuarantees(last); renderStandings();
     if (last) prependLog(last);
     setPlayButton();
     $("#narrate").hidden = !(S.narration && S.records.length);
@@ -275,7 +282,7 @@
     S.info.agents.forEach(cfg => {
       const card = document.querySelector(`[data-id="${cfg.id}"]`);
       if (!card) return;
-      if (!r) return;
+      if (!r) { renderAgentIdle(card, cfg); return; }
       const a = r.agents[cfg.id];
       const fill = a.request_max_kw > 0 ? Math.min(1, a.alloc_kw / a.request_max_kw) : 1;
       const minPos = a.request_max_kw > 0 ? Math.min(1, a.min_kw / a.request_max_kw) : 0;
@@ -315,6 +322,88 @@
     });
   }
 
+  /* Before the first step, cards show real starting values from config, not dashes. */
+  function renderAgentIdle(card, cfg) {
+    if (card.tagName === "TR") {
+      card.querySelector(".c-status").innerHTML = `<span class="status status-OK">${statusHTML("OK")}</span>`;
+      card.querySelector(".c-alloc").textContent = `desired ${kw(cfg.desired_kw)}`;
+      card.querySelector(".meter-fill").style.width = "0%";
+      card.querySelector(".meter-mark").style.left = `calc(${pct(cfg.min_kw / cfg.desired_kw)} - 1px)`;
+      card.querySelector(".c-res").textContent = pct(cfg.reserve_initial_frac);
+      card.querySelector(".c-bid").textContent = "–";
+      card.querySelector(".c-cred").textContent = "0.0";
+      return;
+    }
+    const f = n => card.querySelector(`[data-f="${n}"]`);
+    f("alloc").textContent = "–";
+    f("req").textContent = ` / ${kw(cfg.desired_kw)} desired`;
+    f("allocbar").style.width = "0%";
+    f("minmark").style.left = `calc(${pct(cfg.min_kw / cfg.desired_kw)} - 1px)`;
+    f("res").textContent = pct(cfg.reserve_initial_frac);
+    f("resbar").style.width = pct(cfg.reserve_initial_frac);
+    const ae = f("act");
+    ae.className = "agent-act";
+    ae.innerHTML = `<svg aria-hidden="true"><use href="#i-check"/></svg><span>Critical load ${esc(kw(cfg.min_kw))}</span>`;
+  }
+
+  /* GridPact vs the three baselines, running in lockstep on the same storm. */
+  function renderStandings() {
+    const box = $("#standings");
+    const st = S.standings;
+    const order = ["gridpact", "proportional", "equal", "priority"];
+    const label = { gridpact: "GridPact", proportional: "Proportional", equal: "Equal split", priority: "Strict priority" };
+    if (!st || !st.gridpact || S.records.length === 0) {
+      box.innerHTML = `<p class="standings-lead" style="color:var(--text-3)">Starts with the first step.</p>`;
+      return;
+    }
+    const pols = order.filter(p => st[p]);
+    const max = Math.max(1, ...pols.map(p => st[p].damage));
+    const others = pols.filter(p => p !== "gridpact");
+    const best = others.length ? others.reduce((a, b) => (st[a].damage <= st[b].damage ? a : b)) : null;
+    let lead = "";
+    if (best && st[best].damage > 0) {
+      const d = (st.gridpact.damage - st[best].damage) / st[best].damage * 100;
+      lead = d <= 0
+        ? `<p class="standings-lead">GridPact: <b>${Math.abs(d).toFixed(0)}% less</b> damage than the best baseline so far.</p>`
+        : `<p class="standings-lead">GridPact is ${d.toFixed(0)}% behind ${label[best].toLowerCase()} so far.</p>`;
+    }
+    box.innerHTML = lead + pols.map(p => {
+      const gp = p === "gridpact", x = st[p];
+      return `<span class="st-name${gp ? " is-gp" : ""}">${label[p]}</span>
+        <span><i class="st-bar${gp ? " is-gp" : ""}" style="display:block;width:${(x.damage / max * 100).toFixed(1)}%"></i></span>
+        <span class="st-num">${Math.round(x.damage).toLocaleString()}</span>
+        <span class="st-fail${x.failures ? " has-fail" : ""}">${x.failures} fail${x.failures === 1 ? "" : "s"}</span>`;
+    }).join("");
+  }
+
+  /* Latest step's rounds as a compact ledger: rows = rounds, columns = agents. */
+  function ledgerHTML(r) {
+    const agents = S.info.agents.slice().sort((a, b) => KIND_ORDER.indexOf(a.kind) - KIND_ORDER.indexOf(b.kind));
+    const concessions = r.log.filter(l => l.kind === "concede");
+    if (!r.contested || !concessions.length) return "";
+    const rounds = [...new Set(concessions.map(l => l.round))].sort((a, b) => a - b);
+    const held = new Set(r.log.filter(l => l.kind === "hold").map(l => l.agent));
+    const phase2 = concessions.filter(l => l.phase === 2).map(l => l.round);
+    const p2start = phase2.length ? Math.min(...phase2) : null;
+    const short = n => n.split(" ")[0];
+    const cell = w => w ? `−${(w / 1000).toFixed(w < 10000 ? 1 : 0)}` : "";
+    let h = `<p class="ledger-caption">kW conceded each round${p2start ? ` · phase 2 (dig into reserves) from R${p2start}` : ""}</p>`;
+    h += `<table class="ledger"><thead><tr><th></th>${agents.map(a => `<th style="--c:${kindColor(a.kind)}"><span class="lh"><svg aria-hidden="true"><use href="${kindIcon(a.kind)}"/></svg>${esc(short(a.name))}${held.has(a.id) ? `<span class="held"><svg aria-hidden="true"><use href="#i-lock"/></svg>held</span>` : `<span class="held" aria-hidden="true">&nbsp;</span>`}</span></th>`).join("")}</tr></thead><tbody>`;
+    h += `<tr><td>ask</td>${agents.map(a => `<td>${Math.round(r.agents[a.id].request_max_kw)}</td>`).join("")}</tr>`;
+    rounds.forEach(rd => {
+      h += `<tr><td>R${rd}</td>${agents.map(a => {
+        const w = concessions.filter(l => l.round === rd && l.agent === a.id).reduce((t, l) => t + l.watts, 0);
+        return w ? `<td>${cell(w)}</td>` : `<td class="nil">·</td>`;
+      }).join("")}</tr>`;
+    });
+    h += `<tr class="l-final"><td>got</td>${agents.map(a => `<td>${Math.round(r.agents[a.id].alloc_kw)}</td>`).join("")}</tr>`;
+    h += `<tr class="l-credit"><td>credits</td>${agents.map(a => {
+      const d = r.agents[a.id].credits_earned;
+      return `<td>${Math.abs(d) < 0.05 ? "0.0" : (d > 0 ? "+" : "−") + Math.abs(d).toFixed(1)}</td>`;
+    }).join("")}</tr></tbody></table>`;
+    return h;
+  }
+
   function renderGuarantees(last) {
     // Re-check capacity in the browser too, from raw watts in every record.
     let viol = 0;
@@ -342,7 +431,7 @@
   function summarizeLog(lines) {
     const out = [];
     const holds = lines.filter(l => l.kind === "hold");
-    if (holds.length) out.push({ kind: "hold", round: 0, text: `${holds.length} utilit${holds.length === 1 ? "y holds" : "ies hold"} firm at critical load (reserve below 30%): ${holds.map(l => agentName(l.agent)).join(", ")}.` });
+    if (holds.length) out.push({ kind: "hold", round: 0, text: `${holds.length} utilit${holds.length === 1 ? "y holds" : "ies hold"} firm at critical load (reserve below 30%): ${holds.slice(0, 6).map(l => agentName(l.agent)).join(", ")}${holds.length > 6 ? ` and ${holds.length - 6} more` : ""}.` });
     const rounds = {};
     lines.filter(l => l.kind === "concede").forEach(l => { (rounds[l.round] = rounds[l.round] || []).push(l); });
     Object.keys(rounds).map(Number).sort((a, b) => a - b).forEach(rd => {
@@ -385,6 +474,8 @@
       resp += failed.length ? `Below critical load: ${esc(failed.join(", "))}.` : "No utility below critical load.";
       h += `<div class="log-response">${resp}</div>`;
     }
+    const ledger = S.info.agents.length < COMPACT_AT ? ledgerHTML(r) : "";
+    if (ledger) { div.classList.add("has-ledger"); h += ledger; }
     let lines = (r.contested ? r.log.filter(l => l.kind !== "open") : r.log).filter(l => !["agree", "grant"].includes(l.kind));
     if (S.info.agents.length >= COMPACT_AT) lines = summarizeLog(lines);
     lines.forEach(l => {
@@ -534,6 +625,11 @@
       if (/INPUT|SELECT|TEXTAREA|BUTTON/.test(document.activeElement.tagName) || e.metaKey || e.ctrlKey) return;
       if (e.key === " " && !$("#view-live").hidden) { e.preventDefault(); S.playing ? stop() : play(); }
       if (e.key === "ArrowRight" && !$("#view-live").hidden) { e.preventDefault(); stop(); stepOnce(); }
+      if (/^[1-9]$/.test(e.key) && !$("#view-live").hidden && S.info) {
+        const ev = S.info.injectable[Number(e.key) - 1];
+        const btn = document.querySelectorAll(".inject-btn")[Number(e.key) - 1];
+        if (ev && btn && !btn.disabled) { e.preventDefault(); inject(ev, btn); }
+      }
     });
     let rt;
     window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { if (S.info) { renderChart(); drawCompare(); } }, 120); });
@@ -546,6 +642,7 @@
     if (pre > 0) {
       const d = await api("/api/step", { session: S.session, n: pre });
       d.records.forEach(r => { S.records.push(r); prependLog(r); });
+      S.standings = d.standings || S.standings;
       S.done = d.done;
       renderAll();
     }

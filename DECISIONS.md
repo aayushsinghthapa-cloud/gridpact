@@ -38,7 +38,7 @@ Format for each: **Chose**, **Alternatives**, **Why**. Numbers quoted here come 
   values line up and don't jitter while the simulation runs.
 
 ### T-5. Tests: `unittest` (standard library)
-- **Chose:** 52 tests with `unittest`, run with `python3 gridpact.py test`.
+- **Chose:** 54 tests with `unittest`, run with `python3 gridpact.py test`.
 - **Alternatives:** pytest; Hypothesis for property-based testing.
 - **Why:** Same reason as T-1: nothing to install. We hand-wrote the property-style tests we
   needed, for example 3,000 random cases fuzzing the fallback, and every scenario × policy × seed
@@ -220,5 +220,6 @@ Format for each: **Chose**, **Alternatives**, **Why**. Numbers quoted here come 
 - **Why:** Judges see a laptop for about a minute. The guarantees (0 violations, steps committed,
   4/4 checks) must be visible at all times. Colour follows the utility kind, so a hospital is
   always blue in every scenario, and status is never shown by colour alone (each status has an
-  icon and a label). The design went through Impeccable's audit and an independent two-reviewer
-  critique; fixes are in commit `de91893`.
+  icon and a label). The three baselines run in lockstep with the live run, so the comparison is
+  visible *during* the demo, not only on the results tab. The design went through Impeccable's
+  audit, a two-reviewer critique and a polish pass.

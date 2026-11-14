@@ -96,6 +96,7 @@ sequenceDiagram
 | [gridpact/physics.py](gridpact/physics.py) | What power does once allocated: loads first, recharge with surplus, reserve discharge per the agent's policy, cascades over the dependency graph (iterated to a fixed point), escalating damage. A pure function. |
 | [gridpact/simulation.py](gridpact/simulation.py) | The step engine. Applies events, computes seeded supply, calls the policy, validator and physics, checks invariants, commits atomically, writes a step record. Records injected events so runs can be replayed exactly. |
 | [gridpact/metrics.py](gridpact/metrics.py) | Total damage, failure events, longest outage, Jain's index, critical kWh unserved, rounds, fallback steps, timing. Re-checks capacity from raw watts, without trusting the validator. `compare()` runs all four policies on identical inputs. |
+| [gridpact/live.py](gridpact/live.py) | A live dashboard run: GridPact plus the three baselines stepping in lockstep, with every injected event applied to all four at the same step. Feeds the "Same storm, every policy" panel. A test checks its totals equal a full replay. |
 | [gridpact/server.py](gridpact/server.py) | Standard-library `ThreadingHTTPServer`. Serves `web/` and a small JSON API (session, step, inject, compare, narrate). A lock serializes simulation mutations. |
 | [gridpact/narration.py](gridpact/narration.py) | Optional plain-English narration of a finished step via an LLM API. Off unless `GRIDPACT_LLM=1`; the SDK is imported lazily; failures return a message; the output never feeds back into allocation. |
 | [web/index.html](web/index.html), [web/styles.css](web/styles.css) | Dashboard shell and design tokens (dark control-room palette, self-hosted IBM Plex fonts in `web/fonts/`). |
@@ -106,7 +107,7 @@ sequenceDiagram
 | [data/scenarios/](data/scenarios/) | Cyclone landfall, cascading substation failures, long heatwave brownout, metro stress test. |
 | [scripts/generate_results.py](scripts/generate_results.py) | Writes RESULTS.md from real runs (10 seeds, honesty experiment, scaling). |
 | [scripts/worked_example.py](scripts/worked_example.py) | Writes the round-by-round worked example into ALGORITHM.md from a real step. |
-| [tests/](tests/) | 52 `unittest` tests. The three hard guarantees live in `test_invariants.py`, `test_atomicity.py` and `test_determinism.py`. |
+| [tests/](tests/) | 54 `unittest` tests. The three hard guarantees live in `test_invariants.py`, `test_atomicity.py` and `test_determinism.py`. |
 
 ## HTTP API
 
@@ -114,7 +115,7 @@ sequenceDiagram
 |---|---|---|
 | `GET /api/scenarios` | | list of scenarios, whether narration is on |
 | `POST /api/session` | `{scenario, seed}` | new GridPact run + public scenario info |
-| `POST /api/step` | `{session, n}` | the next n step records |
+| `POST /api/step` | `{session, n}` | the next n step records + live standings for all four policies |
 | `POST /api/inject` | `{session, event_id}` | queues an injectable event for the next step |
 | `POST /api/compare` | `{session}` | all four policies on the same seed and event log, plus metrics |
 | `POST /api/narrate` | `{session, step}` | optional LLM narration |

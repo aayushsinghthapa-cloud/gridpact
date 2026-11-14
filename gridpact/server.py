@@ -23,7 +23,8 @@ from pathlib import Path
 from . import narration
 from .config import ConfigError, list_scenarios, load_scenario
 from .metrics import compare
-from .simulation import Simulation, StepRolledBack
+from .live import LiveSession
+from .simulation import StepRolledBack
 
 WEB_DIR = Path(__file__).resolve().parent.parent / "web"
 _sessions: dict = {}
@@ -40,7 +41,8 @@ def scenario_info(sc) -> dict:
         "agents": [{"id": a.id, "name": a.name, "kind": a.kind, "min_kw": a.min_kw,
                     "desired_kw": a.desired_kw, "priority_rank": a.priority_rank,
                     "reserve_capacity_kwh": a.reserve_capacity_kwh,
-                    "reserve_label": a.reserve_label}
+                    "reserve_label": a.reserve_label,
+                    "reserve_initial_frac": a.reserve_initial_frac}
                    for a in sc.agents],
         "dependencies": [{"source": d.source, "target": d.target, "impact": d.impact, "label": d.label}
                          for d in sc.dependencies],
@@ -71,7 +73,7 @@ class Handler(BaseHTTPRequestHandler):
             raise ValueError("request too large")
         return json.loads(self.rfile.read(n) or b"{}")
 
-    def _session(self, body) -> Simulation:
+    def _session(self, body) -> LiveSession:
         sim = _sessions.get(body.get("session"))
         if sim is None:
             raise KeyError("unknown or expired session; start a new run")
@@ -105,34 +107,34 @@ class Handler(BaseHTTPRequestHandler):
                     if len(_sessions) >= MAX_SESSIONS:
                         _sessions.pop(next(iter(_sessions)))
                     sid = uuid.uuid4().hex
-                    _sessions[sid] = Simulation(sc, seed, "gridpact")
+                    _sessions[sid] = LiveSession(sc, seed)
                     return self._json(200, {"session": sid, "seed": seed, "scenario": scenario_info(sc)})
                 if self.path == "/api/step":
-                    sim = self._session(body)
+                    live = self._session(body)
                     n = max(1, min(int(body.get("n", 1)), 200))
                     out = []
                     for _ in range(n):
-                        if sim.done:
+                        if live.done:
                             break
-                        out.append(sim.step())
-                    return self._json(200, {"records": out, "done": sim.done,
-                                            "total_damage": round(sim.state.total_damage, 2)})
+                        out.append(live.step())
+                    return self._json(200, {"records": out, "done": live.done,
+                                            "standings": live.standings()})
                 if self.path == "/api/inject":
-                    sim = self._session(body)
-                    ev = next((e for e in sim.scenario.injectable if e.id == body.get("event_id")), None)
+                    live = self._session(body)
+                    ev = next((e for e in live.scenario.injectable if e.id == body.get("event_id")), None)
                     if ev is None:
                         return self._json(400, {"error": "unknown event"})
-                    if sim.done:
+                    if live.done:
                         return self._json(400, {"error": "run finished"})
-                    step = sim.inject(ev)
+                    step = live.inject(ev)
                     return self._json(200, {"queued_for_step": step, "label": ev.label})
                 if self.path == "/api/compare":
-                    sim = self._session(body)
+                    sim = self._session(body).sim
                     out = compare(sim.scenario, sim.seed, list(sim.injected))
                     out["injected"] = [{"step": st, "label": e.label} for st, e in sim.injected]
                     return self._json(200, out)
                 if self.path == "/api/narrate":
-                    sim = self._session(body)
+                    sim = self._session(body).sim
                     step = int(body.get("step", len(sim.records) - 1))
                     if not (0 <= step < len(sim.records)):
                         return self._json(400, {"error": "no such step"})
